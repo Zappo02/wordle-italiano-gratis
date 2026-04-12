@@ -1,225 +1,148 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
-// ─── DATABASE ─────────────────────────────────────────────────────────────────
+// ─── DATABASE — parole italiane comuni e certe, 5 lettere ────────────────────
 const DB_RAW = [
+  // A
   "ABETE","ABITO","ACETO","ACIDO","ACQUA","AGILE","AGLIO","AGIRE","AIUTO","ALITO",
   "ALONE","ALTRO","AMARO","AMBRA","AMICO","AMORE","ANIMA","ANSIA","APICE","ARENA",
-  "ARIDO","AROMA","ARPA","ARSO","ARTE","ASINO","ASPRO","ASTRO","ATOMO","AUDIO",
-  "AVERE","AVIDO","AVVIO","ABUSO","ADITO","ALARE","ALATO","ALGHE","ALTEA","AMACA",
-  "AMEBA","AMENO","AMPIO","ANETO","ANODO","APNEA","ARABO","ARECA","ARNIA","AROMI",
-  "ARSIA","ANIME","ALOSA","ARARE","ANCORA",
+  "ARIDO","AROMA","ARCO","ARSO","ARTE","ASINO","ASPRO","ASTRO","ATOMO","AUDIO",
+  "AVERE","AVIDO","ABUSO","ALARE","ALGHE","AMACA","AMEBO","AMENO","AMPIO","ANETO",
+  "APNEA","ARABO","ARNIA","ARSIA","ANIME","ARARE","AGONE","ALONE","AMPIA","ANNUO",
+  // B
   "BABBO","BACIO","BANCO","BARCA","BASSO","BELLO","BIRRA","BOCCA","BORDO","BOSCO",
   "BRAVO","BREVE","BUONO","BUSTO","BAGNO","BALDO","BALLA","BALSA","BALZO","BANDA",
-  "BARBA","BARDO","BAULE","BAZZA","BELVA","BERTA","BIECO","BIOMA","BIRBO","BISCA",
-  "BOBBA","BOCCE","BOLLA","BOMBA","BONGO","BORSA","BOSSO","BRACA","BRAMA","BRANO",
-  "BRINA","BRODO","BROMO","BRUGO","BRUNA","BULBO","BULLO","BURLA","BASTO","BALCO",
-  "BANDO","BARCO","BEFFA","BERCO","BERTO","BINGO","BIOTA","BISSO","BOFFA",
-  "CACCIA","CALDO","CALVO","CAMPO","CANTO","CAPRA","CARTA","CARRO","CASCO","CASSA",
-  "CAUSA","CELLA","CERTO","CIELO","CIRCO","COBRA","COLLA","COLLO","COLMO","COLPA",
-  "COLPO","CORDA","CORPO","CORSA","CORTE","COSMO","CREMA","CROCE","CUORE","CURVA",
-  "CALCE","CALMA","CALMO","CALZA","CAMPA","CANOA","CAPPA","CAPRO","CARMA","CARPA",
-  "CARSO","CASTA","CASTO","CAVEA","CAVIA","CAZZO","CEDRO","CENNO","CENSO","CERVO",
-  "CESTA","CESTO","CHINA","CIGNO","CIPPO","CIRRO","CLAVA","CLERO","CLIMA","CLONE",
-  "CLORO","COCCO","COEVO","COFFA","COMBO","CONCA","CONTA","CONTE","COPIA","COPPA",
-  "COPPO","CORNO","CORVO","COSCA","COSTA","COSTO","COZZO","CRASI","CRAVO","CRINI",
-  "CRIVO","CROMA","CROMO","CRONO","CRUDA","CRUDO","CUBIA","CULEO","CULMO","CUNEO",
-  "CURDO","CURIO","COLTO","COVIO","CORMO","CORRO","CORBO",
-  "DANNO","DANZA","DARDO","DENTE","DOSSO","DRAGO","DUOMO","DAINO","DAMMA","DEBOL",
-  "DENSO","DISCO","DIODO","DOCCE","DOGMA","DOLCE","DOMBO","DORSO","DRENA","DROGA",
-  "DUOLO","DUPLO","DACCA","DAMPA","DARIA","DECIO","DELTO","DESCA","DISMO","DITTO",
-  "DOLCO","DOLSO","DORMO","DOSIO","DUONA","DUONI","DUTTO",
+  "BARBA","BARDO","BAULE","BELVA","BIECO","BIRBO","BOLLA","BOMBA","BONGO","BORSA",
+  "BRACA","BRAMA","BRANO","BRINA","BRODO","BRUNA","BULBO","BULLO","BURLA","BASTO",
+  "BANDO","BEFFA","BINGO","BOSSO","BOCCE","BABEA",
+  // C
+  "CALDO","CALVO","CAMPO","CANTO","CAPRA","CARTA","CARRO","CASCO","CASSA","CAUSA",
+  "CELLA","CERTO","CIELO","CIRCO","COBRA","COLLA","COLLO","COLMO","COLPA","COLPO",
+  "CORDA","CORPO","CORSA","CORTE","COSMO","CREMA","CROCE","CUORE","CURVA","CALCE",
+  "CALMA","CALMO","CALZA","CANOA","CAPPA","CAPRO","CARMA","CARPA","CARSO","CASTA",
+  "CASTO","CAVIA","CEDRO","CENNO","CENSO","CERVO","CESTA","CESTO","CHINA","CIGNO",
+  "CIPPO","CLAVA","CLERO","CLIMA","CLONE","CLORO","COCCO","COFFA","CONCA","CONTA",
+  "CONTE","COPIA","COPPA","CORNO","CORVO","COSCA","COSTA","COSTO","COZZO","CRASI",
+  "CRUDO","CUNEO","CURDO","COLTO","CACCA","CACTO","CAMPO","CAPOC","CARBO","CARPE",
+  "CAUSA","CEFFO","CENERE","CEPPO","CERCO","CHELA","CIPRIA","CIRCA","CIVILE","CLAVA",
+  // D
+  "DANNO","DANZA","DARDO","DENTE","DOSSO","DRAGO","DUOMO","DAINO","DENSO","DISCO",
+  "DIODO","DOCCE","DOGMA","DOLCE","DORSO","DROGA","DUOLO","DETTO","DITTA","DOLCO",
+  "DONNA","DOPPIO","DOTTO","DRITTO",
+  // E
   "EBANO","EDERA","ELMO","ERBA","ESAME","ESITO","ESTRO","ETICA","ETNIA","EBETE",
-  "ECATE","ECUBA","EDEMA","EGIDA","ELICA","ELIDE","ELISO","EMPIO","EMULO","ENEMA",
-  "ENTRO","EPICA","EPOCA","ERNIA","ERODE","EROSE","EROSO","ERUGA","ESODO","ETERE",
-  "ETILE","EVASO","EVOCA","EROTO","ESOSA",
+  "EDEMA","EGIDA","ELICA","EMPIO","EMULO","ENTRO","EPICA","EPOCA","ERNIA","ERODE",
+  "EROSO","ESODO","ETERE","ETILE","EVASO","EVOCA",
+  // F
   "FANGO","FARRO","FERRO","FESTA","FIATO","FIBRA","FIERO","FIORE","FISSO","FIUME",
   "FOBIA","FOLLA","FOLTO","FONTE","FORZA","FOSSO","FRENO","FUOCO","FURBO","FURIA",
-  "FUSTO","FALCO","FALDA","FALLO","FALSA","FALSO","FALZA","FARDA","FARSA","FATTO",
-  "FERMA","FERMO","FERSA","FIABA","FIAMO","FIENO","FIGRA","FILMA","FIOCO","FISIO",
-  "FLATO","FLEBO","FLEMA","FLORA","FOGNA","FONDI","FONDO","FORCO","FORTE","FRAGA",
-  "FRANA","FRATE","FRODE","FUGHE","FUGIO","FULCO","FULGA","FUMIO","FABIO","FADIO",
-  "FAGIO","FANNO","FAONA","FARNE","FATTA","FEBIO","FERIO","FERVO","FERZO","FETTO",
-  "FIATA","FIGLIO","FILAO","FINCA","FINGO","FIRMO","FISTO","FIUMA","FIUSA","FLOCA",
-  "FLORE","FLUTO","FOLIO","FOLMO","FONGA","FORMO","FORTO","FOSIA","FOTIO","FREMA",
-  "FRIGO","FRISE","FROLA","FROME","FRONO","FROSA","FRAVO","FULBE",
-  "GAMBA","GARZA","GATTO","GENIO","GESTO","GHIRO","GIOCO","GIOIA","GIUSTO","GLOBO",
-  "GORGO","GRANO","GRIDO","GUSTO","GABBA","GABLO","GALIO","GALLA","GALLO","GALMO",
-  "GAMBO","GANDA","GANNA","GARBA","GARBO","GARMO","GARRA","GARRO","GAUCO","GELIO",
-  "GEMMA","GERMA","GERMI","GIBBO","GIMBO","GINCO","GIRMO","GIUDA","GLENA","GNOMO",
-  "GOGNA","GOLFO","GOMMA","GONNA","GONZO","GORBA","GOSSA","GOTTO","GOZZO","GRAMO",
-  "GRAPA","GREBO","GRECA","GRETO","GRIFO","GRIMO","GRUMO","GUADO","GUAIO","GUANO",
-  "GUATA","GUBIA","GUIDA","GUIZO","GENNA","GENOA","GERSA","GILIO","GILDO","GIRON",
-  "GIUME","GLOMO","GOLMO","GONDA","GRASA","GREMO","GRESA","GRIGO","GRILE","GRIMA",
-  "GRIPO","GRISA","GRISO","GRITA","GRONA","GROPO","GROSA","GROTO","GRUNA",
-  "IDOLO","INDIA","IRONIA","ISOLA","ICONA","IGLOO","IMAGO","INCIO","INDIO","INNO",
-  "INVIO","IODIO","IRIDE","IRIDO","IRISO","IROSO","ISTMO","IMELO","IMIDE","IMIDO",
-  "IMOLO","IPPIE","IPSIA","ISARD","ISCIO",
+  "FUSTO","FALCO","FALDA","FALLO","FALSA","FARSA","FATTO","FERMA","FERMO","FIABA",
+  "FIENO","FILMA","FIOCO","FLEBO","FLORA","FOGNA","FONDO","FORTE","FRANA","FRATE",
+  "FRODE","FRIGO","FABIO","FANNO","FARNE","FEBBRE","FETTA","FIGLIO","FIUME","FOGLIO",
+  "FORMO","FOSCO","FRUTTO","FUNGO","FUORI",
+  // G
+  "GAMBA","GARZA","GATTO","GENIO","GESTO","GHIRO","GIOCO","GIOIA","GLOBO","GORGO",
+  "GRANO","GRIDO","GUSTO","GABBA","GALIO","GALLA","GALLO","GAMBO","GARBO","GEMMA",
+  "GENOA","GERME","GIBBO","GNOMO","GOGNA","GOLFO","GOMMA","GONNA","GONZO","GOZZO",
+  "GRECA","GRETO","GRIFO","GRUMO","GUADO","GUAIO","GUANO","GUIDA","GATTO","GENERE",
+  "GHISA","GIGLIO","GIORNO","GOBBA","GOLPE","GRANO","GROPPA","GROTTA","GUANCIA",
+  // I
+  "IDOLO","INDIA","ISOLA","ICONA","IGLOO","IMAGO","INDIO","INNO","INVIO","IRIDE",
+  "IROSO","ISTMO","IMENE","IPNOSI",
+  // L
   "LACCA","LAMPO","LARDO","LARGO","LATTE","LENZA","LEONE","LEPRE","LIBRO","LIMBO",
-  "LINCE","LINFA","LISTA","LITRO","LOTTA","LUCRO","LUOGO","LUSSO","LABIO","LABRO",
-  "LACCO","LAIDO","LALIO","LAMBA","LAMEN","LAMIA","LAMIO","LAMMA","LANCA","LANGO",
-  "LANIA","LANNA","LAPPA","LAPSO","LARMO","LASCE","LASCA","LASMA","LAUTO","LAVRA",
-  "LAZIO","LECCO","LEGNO","LEMMA","LENTO","LERMA","LEUCA","LEVIO","LIBIA","LIBIO",
-  "LIBRA","LIGIO","LIGNA","LIGNO","LILLA","LIMAO","LIMBE","LIMIO","LIMMA","LINCO",
-  "LINGO","LINIO","LINZA","LIOMA","LIRIO","LISCA","LISCO","LISIA","LISIO","LISME",
-  "LISSO","LITIO","LIUTO","LIVIO","LIVRO","LOBIO","LOGIO","LOGRO","LOMBA","LOMBO",
-  "LONCO","LONDO","LONZA","LOPPA","LORDO","LOSCA","LOSCO","LOTTO","LUCCA","LUCIO",
-  "LUGRO","LUMIA","LUMBO","LUMEN","LUNGA","LUNGO","LURCO","LURDO",
+  "LINCE","LINFA","LISTA","LITRO","LOTTA","LUCRO","LUOGO","LUSSO","LAIDO","LAMBA",
+  "LANCIA","LARGO","LASCA","LAUTO","LAZIO","LECCO","LEGNO","LEMMA","LENTO","LEUCA",
+  "LIGIO","LIGNA","LILLA","LIMAO","LINCO","LITIO","LIUTO","LOGIO","LOMBO","LONZA",
+  "LOPPA","LORDO","LOSCO","LOTTO","LUCCA","LUNGA","LUNGO","LARDO","LASTRA","LAVORO",
+  "LEGGE","LENTO","LIBRO","LIEVE","LINCE","LINGUA","LISTA","LITRO","LOTTA","LUCE",
+  // M
   "MAGMA","MALTO","MAPPA","MAZZO","MEZZO","MIELE","MIRTO","MOLLE","MONDO","MONTE",
-  "MORSA","MOSSO","MOTTO","MULTA","MACCA","MAGNA","MAGNO","MALGA","MALIO","MALMO",
-  "MANCA","MANCO","MANGA","MANIA","MANNA","MANNO","MANTO","MARCA","MARCO","MARMO",
-  "MARNA","MARSA","MARZO","MASCA","MASSA","MASSO","MATRO","MAZZA","MEDIO","MELIA",
-  "MELIO","MELLO","MELMA","MENSO","MENTA","MENTO","MERCO","MERDA","MERGO","MERLO",
-  "MERMA","MERSO","MERTO","MESCA","MESCO","MIGRO","MILEO","MIMEO","MIRCO","MIRMA",
-  "MISCA","MISCO","MISSO","MISTO","MITIO","MOGIO","MOGNO","MOINE","MOLIO","MOLLA",
-  "MOLLO","MOLSA","MOLSO","MOLZA","MOLZO","MONCO","MONGO","MONNA","MONSA","MONTO",
-  "MORBO","MORCO","MORDO","MORMO","MORNO","MORSE","MORSO","MORTO","MORZA","MOSCA",
-  "MOSSE","MUCCA","MULCO","MULIO","MULLO","MUNDA","MUNDO","MUNGA","MUNGO","MUNSA",
-  "MUNSO","MUNTO","MURBA","MURBO","MURCA","MURCO","MURGA","MURGO","MURSA","MURSO",
-  "MURZA","MUSCO","MUSEO","MUSIO","MUSSA","MUSSO","MALSA","MAMBO","MANIO",
-  "NARDO","NETTO","NORMA","NOTTE","NABBA","NABBO","NACCA","NACRO","NADIA","NAMBO",
-  "NANCA","NANCO","NANGO","NANNA","NANNO","NANSA","NANTO","NAPPO","NARMO","NARSA",
-  "NARSO","NASCO","NAUCO","NEGRO","NELMO","NELLO","NEMIA","NENNA","NENNO","NENSA",
-  "NENTO","NERBO","NERCO","NERDO","NERNA","NERNO","NERSA","NERSO","NERTO","NERVO",
-  "NEVRO","NIMBO","NINFA","NIPPO","NIRVO","NITRO","NOCCA","NOGIO","NORBA","NORCO",
-  "NORDO","NORGA","NORNA","NORSA","NORSO","NORTO","NOSSA","NOSSO","NOVIO","NUBIA",
-  "NUCCA","NURBA","NURBO","NURCA","NURCO","NURSA","NURSO","NUSSO",
+  "MORSA","MOSSO","MOTTO","MULTA","MAGNA","MAGNO","MALGA","MANCA","MANCO","MANGA",
+  "MANIA","MANNA","MANTO","MARCA","MARMO","MARZO","MASSA","MAZZO","MEDIO","MELLA",
+  "MELMA","MENTA","MENTO","MERLO","MERSO","MESCO","MOGIO","MOGNO","MOLLA","MOLLO",
+  "MONCO","MONGO","MONNA","MONTO","MORBO","MORSO","MORTO","MOSCA","MUCCA","MUNTA",
+  "MUSCO","MUSEO","MUSSA","MUSSO","MAMBO","MANIO","MANZO","MARZO","MASCA","MATITA",
+  "MEDICO","MESTO","METRO","MEZZO","MIRRA","MISTO","MITRO","MOLTI","MOLTO","MONDO",
+  "MONTE","MORSO","MOSSO","MOTTO","MULINO",
+  // N
+  "NARDO","NETTO","NORMA","NOTTE","NABBA","NANNA","NAPPO","NEGRO","NELLO","NERBO",
+  "NERVO","NIMBO","NINFA","NITRO","NOCCA","NUBIA","NUCCA","NULLA","NUORA","NUVOLA",
+  "NAZIONE","NEBBIA","NERVO","NETTO","NIPOTE","NOBILE","NOCCA","NONNA","NORMA","NOSCO",
+  // O
   "OBLIO","OMBRA","OPERA","ORCO","ORLO","ORZO","OSARE","OSSO","OSTIA","ODEON",
-  "ODORE","OLIVO","OMERO","OMICO","OPPIA","ORANO","ORCIO","ORMAI","OSTEO","OSTRA",
-  "OVAIA","OBELO","OCHIO","OFFIO","OFICO","OLSIO","OLZIO","OMASO","OMINO","OMISA",
-  "OMISO","ONCIO","ONDIO","ONFIO","OPACA","OPACO","OPPIO","ORBIO","ORDIO","ORGIO",
-  "ORIGO","ORSIA","ORUBA","ORUCA","ORUGA","ORULO","OSARO","OSCIA","OSIMO","OSMIO",
-  "OSTIO","OUTRO",
+  "ODORE","OLIVO","OMERO","OPACO","OPPIO","ORMAI","OSTEO","OSTRA","OVAIA",
+  "OCCHIO","OFFERTA","OGNUNO","OLIVA","ONDE","ONORE","OPERE","ORARIO","ORDINE","ORTICA",
+  // P
   "PALLA","PALMO","PANNA","PARCO","PASTO","PAURA","PEGNO","PELLE","PERLA","PESCA",
   "PIANO","PIENO","PIZZA","POLSO","POMPA","PORTA","PORTO","POZZO","PRIMA","PROVA",
-  "PUNTO","PACCA","PACCO","PADRE","PALCO","PALEO","PALIO","PALSA","PANNO","PAPPO",
-  "PARMA","PARNA","PARSO","PARTO","PASCA","PASCO","PASMO","PASSO","PASTA","PATEA",
-  "PATIO","PATMO","PATRO","PAZZO","PECCA","PECCO","PEDIO","PELSA","PELSO","PENTO",
-  "PERDO","PERIO","PERMA","PERNO","PERSA","PERSO","PERTO","PESIO","PESO","PETTO",
-  "PIAGA","PICCA","PICCO","PICIA","PIGIO","PIGNA","PIGNO","PILMA","PILMO","PINCO",
-  "PINGO","PINIA","PINSA","PINTO","PINZA","PIOTA","PIPPO","PIRCO","PIRIO","PIRSA",
-  "PIRSO","PIRTO","PISCA","PISCO","PISIO","PISMO","PISSO","PISTO","PLANA","PLANO",
-  "PLUMA","POCIO","PODIO","POGIO","POLCA","POLCO","POLDO","POLIA","POLIO","POLLO",
-  "POLMA","POLMO","POLPA","POLSA","POLVO","POLZA","POMBO","PONCO","PONDO","PONGA",
-  "PONGO","PONSA","PONTO","PONZA","POPPA","PORCO","PORGA","PORNO","PORSA","POSCA",
-  "POSIO","POSSO","POSTO","POTIO","POTSO","PREDA","PREMO","PRESA","PRESO","PRETO",
-  "PREVO","PRIMO","PRIVO","PROBE","PROBO","PRODA","PRODE","PRONA","PRONO","PRORA",
-  "PROSA","PROSO","PUGIO","PULCO","PULEO","PULIA","PULIO","PULLO","PULSA","PULSO",
-  "PUNCA","PUNCO","PUNGA","PUNGO","PUNSA","PUPPA","PURCA","PURCO","PURGA","PURGO",
-  "PURSA","PURSO","PUSCA","PUSCO","PIAMO","PIATO","PICIO","PILAO","PATEO",
+  "PUNTO","PACCO","PADRE","PALCO","PALIO","PANNO","PARMA","PARSO","PARTO","PASSO",
+  "PASTA","PATIO","PAZZO","PECCA","PECTO","PENTO","PERDO","PERMA","PERNO","PERSO",
+  "PERTO","PESO","PETTO","PIAGA","PICCO","PIGNA","PINCO","PINTO","PINZA","PIOTA",
+  "PIPPO","PISCA","PISTO","PLANA","PODIO","POLCA","POLIA","POLLO","POLPA","POLSO",
+  "POLZA","POPPA","PORCO","PORGA","PORNO","POSSO","POSTO","PREDA","PREMO","PRESA",
+  "PRETO","PRIMO","PRIVO","PRODE","PRONA","PRORA","PROSA","PUPPA","PURGA","PUSCA",
+  "PAESE","PALCO","PANE","PASSO","PATTO","PAUSA","PAZZO","PECORA","PELO","PENNELLO",
+  "PEPE","PESCE","PETTO","PIATTO","PIEDE","PIETRA","PIGRO","PILOTA","PINETA","PIUMA",
+  "PIZZO","POLSO","PONTE","POSTO","POTERE","PRANZO","PREGO","PRESTO","PRIMO","PROBO",
+  // R
   "RADIO","RAZZA","REGNO","RESTO","RETTA","RICCO","RITMO","ROCCA","ROSSO","ROTTA",
-  "RUOLO","RUOTA","RUSSO","RABCO","RACCA","RACCO","RADIA","RAGNA","RAGNO","RAINO",
-  "RALLO","RALSA","RAMBA","RAMBO","RAMPA","RANCA","RANCO","RANGO","RANNA","RANNO",
-  "RANSA","RANTO","RANZA","RAPIO","RAPPA","RAPSO","RASCO","RASIO","RASSA","RASSO",
-  "RASTO","RATTO","RAZMA","RAZSO","RAZTO","RECCO","RECTO","REDIO","REGIO","REGMO",
-  "RELIO","RELLO","RELSA","RIMBA","RIMBO","RIMPA","RINCA","RINGO","RISCA","RISCO",
-  "RISMA","RISSO","RISTO","RITMA","RIUSA","RIUSO","ROGNA","ROGNO","ROMBA","ROMBO",
-  "RONCA","RONCO","RONGA","RONGO","RONSA","RONTO","RONZA","RONZO","ROSCO","ROSMA",
-  "ROSSA","ROSTO","ROTMA","ROTSA","ROTZO","RULCO","RULLA","RULLO","RUMBA","RUNCO",
-  "RUNNA","RUNSO","RUNTO","RUNZA","RUSCA","RUSSA","RUSTO","RODEO","RONDO","RAFFO",
-  "RANZO","RASPA","RASPO","REDIA","REZIA","RIBCO","RICMA","RIGMO","RIGNO","RILMO",
-  "RILSA","RIMCO","RIMMA","RINCO","RINSA","RINZA","RISIO","RIVCO","RIVMA","ROMCO",
-  "ROMMA","ROMSA","RORCA","ROSIO","ROTIO","ROVIO","RUGMA","RUGNA","RUGSA","RULSA",
-  "RUMCO","RUMMA","RURBA","RURCO","RURSA",
+  "RUOLO","RUOTA","RUSSO","RAGNA","RAGNO","RALLO","RAMBA","RAMPA","RANCA","RANGO",
+  "RANTO","RAPIO","RAPPA","RASCO","RASIO","RASSO","RASTO","RATTO","RECCO","REGIO",
+  "RISCA","RISCO","RISMA","RISSO","RISTO","RIUSA","RIUSO","ROGNA","ROMBA","ROMBO",
+  "RONCA","RONCO","RONGA","ROSCO","ROSMA","ROSSA","ROSTO","RULCO","RULLA","RULLO",
+  "RUMBA","RUSCA","RUSSA","RUSTO","RAFFO","RASPA","RASPO","RADIA","RADICE","RAGONE",
+  "RAMO","RAPIDO","REALE","RETTO","RICCO","RIONE","RISO","RITMO","ROCCIA","RONDINE",
+  // S
   "SACRO","SAGRA","SALMO","SALTO","SALVO","SASSO","SCALA","SCENA","SCOPA","SCOPO",
   "SCUDO","SENSO","SERVO","SFERA","SOGNO","SOLCO","SORTE","SOTTO","SPADA","SPIGA",
-  "SUOLO","SUONO","SABCO","SABMO","SACCA","SACCO","SADIA","SAGIO","SALIO","SALLO",
-  "SALSA","SALSO","SAMBA","SANBO","SANCA","SANCO","SANGO","SANNA","SANNO","SANSA",
-  "SANSO","SANTO","SANZA","SAPCO","SAPPE","SAPPO","SARCO","SARIO","SARMA","SARMO",
-  "SARPA","SARPO","SARSA","SARSO","SARTO","SAVIA","SAVIO","SECCO","SEDIA","SEGNO",
-  "SELIO","SELLO","SELSA","SEMMA","SEMSO","SENNA","SENNO","SESTO","SFIDA","SFOGO",
-  "SFUGA","SIENA","SILCO","SILEO","SILIO","SILVA","SIMBA","SIMIO","SINCO","SINGA",
-  "SINGO","SINNA","SINNO","SINSA","SINTO","SINZA","SIPMA","SIPMO","SIRCO","SIRIO",
-  "SIRSA","SIRSO","SIRTO","SISCA","SISMA","SISSO","SISTO","SITIO","SITMA","SITMO",
-  "SITSA","SLOGA","SLOGO","SNODA","SNODO","SOBBA","SODIO","SOLIO","SOLLO","SOLMA",
-  "SOLMO","SOLSA","SOLSO","SOLZA","SOMBA","SOMBO","SOMMA","SOMMO","SONCA","SONCO",
-  "SONGA","SONGO","SONNA","SONNO","SONTO","SONZA","SOPRA","SORBA","SORBO","SORDA",
-  "SORDO","SORGA","SORGO","SORIA","SORMO","SORSA","SORSO","SORTO","SOSCO","SOSSE",
-  "SOSSO","SOVCO","STAMO","STARE","STATO","STECO","STELO","STILE","STIMA","STIMO",
-  "STIPA","STIPO","STIVA","STOLA","STONA","STOPA","STRIA","STUFA","STUFO","SULCA",
-  "SULCO","SULLA","SULLO","SURCO","SURIA","SURIO","SURSA","SURSO","SUSCA","SUSIO",
-  "SUSSO","SVAGO","SVELA","SVELO","SVEVA","SVEVO","SABBA","SALSO","SCAMA","SCAMO",
-  "SCAPI","SCAPO","SCARO","SCASO","SCATO","SCAVO","SCEMO","SCESO","SCOLA","SCONO",
-  "SCORI","SCORO","SCOSA","SCOSO","SCOTO","SCOVA","SCUDA","SECCO","SENCO","SESIO",
-  "SIMCO","SIMMA","SIPCO","SIRMA","SIRMO","SISIO","SISMO","SITCO","SITSO","SOBCA",
-  "SOBCO","SOBIO","SOMCA","SOMCO","SOMIA","SONSA","SONSO","SOPCO","SOPIO","SORCO",
-  "SORMA","SOSTO","SOTCO","SOTIO","SOTMA","SOTSO","STIGA","STIGO","STIVO","STOLO",
-  "STONO","STOPO","STORO","STOSA","STOSO","STOTO","STOVA","STRAO","STRIO","STUMA",
-  "STUMO","STUPO","SUBCO","SUBMA","SUBMO","SULMA","SULMO","SULSA","SULSO","SUMBA",
-  "SUMBO","SUMCA","SUMCO","SUMIA","SUMSA","SURMA","SURMO","SURTO","SURZA","SUSCO",
-  "SUSMA","SUSMO","SUSTO","SVEMA","SVEMO","SVESA","SVESO",
+  "SUOLO","SUONO","SACCA","SACCO","SALIO","SALSA","SAMBA","SANCA","SANGO","SANNA",
+  "SANTO","SARCO","SARIO","SARSA","SARTO","SAVIO","SECCO","SEDIA","SEGNO","SELLO",
+  "SENNA","SESTO","SFIDA","SFOGO","SIENA","SILVA","SINCO","SIRIO","SISMA","SISTO",
+  "SLOGA","SNODA","SODIO","SOLIO","SOLLO","SOLMA","SOMMA","SONNA","SONNO","SOPRA",
+  "SORDO","SORGO","SORSA","SORSO","SORTO","STARE","STATO","STELO","STILE","STIMA",
+  "STIPA","STIVA","STOLA","STONA","STRIA","STUFA","STUFO","SULLA","SURCO","SVAGO",
+  "SVELA","SVEVO","SABBIA","SALIRE","SALUTE","SAPER","SAPERE","SASSO","SCALO","SCEMO",
+  "SCENA","SCHEDA","SCOPA","SCORTA","SCUDO","SEDIA","SEGNO","SEMPRE","SENNO","SENSO",
+  "SERA","SERVO","SOGLIA","SOLDO","SOLE","SONNO","SOPRA","SORTE","SOTTO","SPADA",
+  "SPAGO","SPALLA","SPARO","SPAZIO","SPESA","SPIGA","SPORT","SPUNTO","STAMPO","STANCO",
+  "STELLA","STILE","STOMACO","STORIA","STRADA","STRANO","SUONO",
+  // T
   "TACCO","TANGO","TANTO","TARDO","TASTO","TEMPO","TENDA","TERRA","TESTA","TIGRE",
-  "TINTO","TONDO","TOPPA","TORTA","TRAMA","TRONO","TUTTO","TABMO","TABSA","TACCA",
-  "TAGIO","TAGSA","TALCO","TALEO","TALIO","TALLA","TALLO","TALMA","TALMO","TALPA",
-  "TALPO","TALSA","TALSO","TAMBA","TAMBO","TAMCA","TAMCO","TAMIO","TAMMA","TAMMO",
-  "TAMPA","TAMPO","TAMSA","TANCA","TANCO","TANGA","TANNA","TANNO","TANSA","TANZA",
-  "TAPCO","TAPPA","TAPPO","TAPSO","TARCA","TARCO","TARIO","TARMA","TARMO","TARNA",
-  "TARRO","TARSA","TARSO","TARTA","TARZO","TASCA","TASCO","TASIO","TASMA","TASMO",
-  "TASSE","TASSO","TATCO","TATIO","TATMA","TATMO","TATSA","TATSO","TATZO","TAZZA",
-  "TAZZO","TECCO","TECIA","TEDIO","TEGIO","TELIA","TELIO","TELLA","TELLO","TELMA",
-  "TELMO","TELSO","TEMBA","TEMBO","TEMCA","TEMCO","TEMMA","TEMMO","TEMPA","TEMSA",
-  "TENCA","TENCO","TENGA","TENGO","TENNA","TENNO","TENSA","TENSO","TENTA","TENTO",
-  "TENZA","TERBA","TERBO","TERCA","TERCO","TERGA","TERGO","TERMA","TERMO","TERNA",
-  "TERNO","TERSA","TERSO","TERTA","TERZA","TERZO","TESCO","TESMA","TESMO","TESSA",
-  "TESSO","TESTO","TINCA","TINCO","TINGA","TINGO","TINNA","TINNO","TINSA","TINSO",
-  "TINZA","TIPCO","TIPIO","TIPMA","TIRCO","TIRIA","TIRIO","TIRMA","TIRMO","TIRNA",
-  "TIRNO","TIRSA","TIRSO","TIRZA","TISCA","TISCO","TISIO","TISMA","TISSO","TISTO",
-  "TOCCA","TOCCO","TOGIO","TOGNA","TOGNO","TOLCA","TOLCO","TOLIO","TOLLA","TOLLO",
-  "TOLMA","TOLMO","TOLSA","TOLSO","TOMBA","TOMBO","TOMCA","TOMCO","TOMIA","TOMIO",
-  "TOMMA","TOMMO","TOMPA","TOMPO","TONCA","TONCO","TONGA","TONGO","TONNA","TONNO",
-  "TONSA","TONSO","TONTO","TONZA","TOPCO","TOPIO","TOPMA","TOPMO","TOPSA","TOPSO",
-  "TORBA","TORBO","TORCA","TORCO","TORDA","TORDO","TORGA","TORGO","TORIA","TORIO",
-  "TORMA","TORMO","TORNA","TORNO","TORRA","TORSA","TORSO","TORTO","TORVO","TORZA",
-  "TOSCA","TOSCO","TOSIA","TOSIO","TOSSA","TOSSO","TOSTO","TRACI","TRAGA","TRAGO",
-  "TRAIO","TRAMO","TRAPA","TRASA","TRASO","TRATO","TRAVO","TREGO","TREMO","TRENO",
-  "TREPA","TRESA","TRESO","TRETO","TREVO","TRIGI","TRINO","TULCA","TULCO","TULIO",
-  "TULLA","TULLO","TULMA","TULMO","TULSA","TULSO","TUMBA","TUMBO","TUMCA","TUMCO",
-  "TUMIA","TUMIO","TUMMA","TUMMO","TUMPA","TUNCA","TUNCO","TUNDA","TUNDO","TUNGA",
-  "TUNGO","TUNNA","TUNNO","TUNSA","TUNTO","TUNZA","TURBA","TURBO","TURCA","TURCO",
-  "TURDA","TURDO","TURGA","TURGO","TURIA","TURIO","TURMA","TURMO","TURNA","TURNO",
-  "TURRA","TURSA","TURSO","TURTO","TURZA","TUSCA","TUSCO","TUSIO","TUSMA","TUSMO",
-  "TUSSA","TUSSO","TUSTO","TITMO","TITSA","TITCO","TITIO","TITMA","TITTO",
+  "TINTO","TONDO","TOPPA","TORTA","TRAMA","TRONO","TUTTO","TACCA","TALCO","TALPA",
+  "TAMBA","TAMPA","TANCA","TANGO","TANNA","TANZA","TAPPA","TAPPO","TARMA","TARRO",
+  "TARSA","TARSO","TASSA","TASTO","TAZZA","TECCO","TEDIO","TELLA","TEMPO","TENCA",
+  "TENSO","TENTA","TENTO","TERGO","TERMA","TERMO","TERNA","TERNO","TERSA","TERSO",
+  "TERZA","TERZO","TESSA","TESTO","TINCA","TINGO","TINTO","TIRSO","TISCA","TISCO",
+  "TOCCA","TOGNA","TOLCO","TOLLA","TOMBA","TONNO","TOPPA","TORBA","TORDO","TORGO",
+  "TORIA","TORMA","TORNA","TORNO","TORSA","TORSO","TORTO","TORVO","TOSCA","TOSCO",
+  "TOSSA","TOSTO","TRAGA","TRAMO","TRASA","TRAVO","TREMO","TRENO","TRETO","TRINO",
+  "TULCO","TULLO","TUMBA","TUMBO","TUNCO","TURBA","TURBO","TURCO","TURNO","TUSCA",
+  "TUTTO","TABACCO","TACERE","TAGLIO","TALE","TARDI","TASTO","TAZZE","TEATRO","TEMPO",
+  "TENER","TENUE","TERME","TERRA","TESTA","TIGRE","TIMORE","TINTA","TIPO","TITOLO",
+  "TOCCO","TOPO","TORO","TORTO","TOSSE","TRAINO","TRATTO","TRAVE","TRENO","TRISTE",
+  "TRONCO","TRONO","TROPPO","TROTA","TURNO",
+  // U
   "ULTRA","UMANO","UMIDO","UNIRE","UNICO","UNITO","URLO","USATO","USCIO","UTILE",
-  "ULCIO","ULCMO","ULGIO","ULICO","UCREO","UBLIO","UBRIO","UBICO",
+  "UDIRE","UGUALE","ULIVO","UMILE","UNGHIA","UNICO","UNIRE","UOMO","USURA",
+  // V
   "VANGA","VANTO","VASTO","VENTO","VERDE","VERSO","VETRO","VIOLA","VISTA","VOLPE",
-  "VOLTA","VACCA","VAGIO","VAGMO","VAGSA","VAGSO","VALIO","VALLA","VALLO","VALMA",
-  "VALMO","VALPA","VALPO","VALSA","VALSO","VALZA","VALZO","VAMBA","VAMBO","VAMPA",
-  "VAMPO","VANCA","VANCO","VANGA","VANNA","VANNO","VANSA","VANSO","VANZA","VAPCO",
-  "VAPMO","VARCA","VARCO","VARIA","VARIO","VARMA","VARMO","VARNA","VARNO","VARSA",
-  "VARSO","VASCA","VASCO","VASMA","VASMO","VASSA","VASSO","VENCO","VENIA","VENIO",
-  "VENMA","VENMO","VENNA","VENNO","VENSA","VENTA","VENZA","VERBA","VERBO","VERCA",
-  "VERCO","VERDA","VERDO","VERGA","VERGO","VERIA","VERIO","VERMA","VERMO","VERNA",
-  "VERNO","VERRA","VERSA","VERTO","VESCA","VESCO","VESIO","VESMA","VESMO","VESSA",
-  "VESSO","VESTA","VESTI","VESTO","VETCO","VETIO","VETMA","VETMO","VETSA","VETSO",
-  "VETZA","VIBCO","VIBIO","VIBMA","VIBMO","VICCO","VICIA","VICIO","VIGEO","VIGIA",
-  "VIGIO","VIGMA","VIGMO","VIGNA","VIGNO","VILCA","VILCO","VILIA","VILIO","VILLA",
-  "VILLO","VILMA","VILMO","VILSA","VILSO","VIRGA","VIRGO","VIRIA","VIRIO","VIRMA",
-  "VIRMO","VIRNA","VIRNO","VIRSA","VIRSO","VIRTU","VIRZA","VISCA","VISCO","VISIO",
-  "VISMA","VISSO","VITCO","VITIO","VITMA","VITMO","VITSA","VITSO","VIVCO","VIVIO",
-  "VIVMA","VIVMO","VOLCA","VOLCO","VOLIO","VOLLA","VOLLO","VOLMA","VOLMO","VOLSA",
-  "VOLSO","VOLTO","VOLZA","VOMCO","VOMIO","VOMMA","VOMMO","VORCA","VORCO","VORIO",
-  "VORMA","VORMO","VORNA","VORNO","VORSA","VORSO","VORTO","VORZA","VOSCA","VOSCO",
-  "VOSIO","VOSMA","VOSMO","VOSSA","VOSSO","VOSTO","VOTCO","VOTIO","VOTMA","VOTMO",
-  "VOTSA","VOTSO","VULCO","VULIO","VULLA","VULLO","VULMA","VULMO","VULSA","VULSO",
-  "ZAINO","ZAMPA","ZAPPA","ZEBRA","ZUPPA","ZAFCO","ZAGIO","ZALIO","ZAMMA","ZAMMO",
-  "ZAMSA","ZANCA","ZANCO","ZANGA","ZANGO","ZANNA","ZANNO","ZANSA","ZANSO","ZANTO",
-  "ZANZA","ZAPSA","ZARCO","ZARIO","ZARMA","ZARMO","ZARSA","ZARSO","ZARZA","ZASCA",
-  "ZASIO","ZASMA","ZASMO","ZASSO","ZASTO","ZATIO","ZATSA","ZATSO","ZATZA","ZECCA",
-  "ZECCO","ZELIA","ZELIO","ZELLA","ZELLO","ZELMA","ZELMO","ZELSA","ZELSO","ZELTO",
-  "ZENCO","ZENIA","ZENIO","ZENMA","ZENMO","ZENNA","ZENNO","ZENSA","ZENSO","ZENTO",
-  "ZENZA","ZERBA","ZERBO","ZERCA","ZERCO","ZERDA","ZERDO","ZERGA","ZERGO","ZERIA",
-  "ZERIO","ZERMA","ZERMO","ZERNA","ZERNO","ZERSA","ZERSO","ZERZA","ZIBCO","ZIBIO",
-  "ZILLA","ZILLO","ZILMA","ZILMO","ZILSA","ZILSO","ZIMBA","ZIMBO","ZIMIA","ZIMIO",
-  "ZIMMA","ZIMMO","ZINCA","ZINCO","ZINGA","ZINGO","ZINNA","ZINNO","ZINSA","ZINSO",
-  "ZINTO","ZINZA","ZIPCO","ZIPIO","ZIPMA","ZIRCO","ZIRIO","ZIRMA","ZIRMO","ZIRSA",
-  "ZIRSO","ZIRTO","ZIRZA","ZISCA","ZISCO","ZISIO","ZISMO","ZISSA","ZISSO","ZISTO",
-  "ZOCCO","ZOCIO","ZOLIA","ZOLIO","ZOLLA","ZOLLO","ZOLMA","ZOLMO","ZOLSA","ZOLSO",
-  "ZOMCA","ZOMCO","ZOMIA","ZOMIO","ZOMMA","ZOMMO","ZONCA","ZONCO","ZONGA","ZONGO",
-  "ZONNA","ZONNO","ZONSA","ZONSO","ZONTO","ZONZA","ZORCA","ZORCO","ZORIA","ZORIO",
-  "ZORMA","ZORMO","ZORSA","ZORSO","ZORZA","ZOSCA","ZUSCA","ZUSCO","ZUSIO","ZUSTO",
+  "VOLTA","VACCA","VALLA","VALLO","VALSA","VAMPA","VANCA","VANNA","VARCA","VARCO",
+  "VARIA","VARIO","VASCA","VASSA","VENNA","VENTA","VERBA","VERBO","VERDA","VERGA",
+  "VERGO","VERMA","VERNA","VERRA","VERSA","VERTO","VESSA","VESTA","VESTO","VICCO",
+  "VIGNA","VIGNO","VILLA","VILLO","VIRGA","VIRGO","VIRTU","VISCA","VISCO","VISSO",
+  "VOLCA","VOLIO","VOLLA","VOLLO","VOLMA","VOLSA","VOLSO","VOLTO","VORSO","VORTO",
+  "VOSSO","VULCO","VULLA","VULLO","VALCO","VALORE","VECCHIO","VELOCE","VENIRE","VENTO",
+  "VERBO","VERDE","VERSO","VETRO","VIGORE","VINO","VIRTÙ","VISITA","VITA","VIVERE",
+  "VOCE","VOGLIA","VOLARE","VOLERE","VOLPE","VOLTA",
+  // Z
+  "ZAINO","ZAMPA","ZAPPA","ZEBRA","ZUPPA","ZANNA","ZECCA","ZOLLA","ZUCCA","ZUFFA",
+  "ZINCO","ZOLFO","ZOMBI","ZONA","ZOPPO",
 ];
 
 function normStr(s) {
-  return s.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Z]/g,"");
+  return s.toUpperCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^A-Z]/g, "");
 }
 const WORDLE_POOL = [...new Set(DB_RAW.map(normStr).filter(w => w.length === 5))];
 const POOL_SIZE = WORDLE_POOL.length;
@@ -236,8 +159,8 @@ const EPOCH = new Date("2020-01-01");
 function seedFromDate(d) {
   return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
 }
-function dayNum(d) {
-  return (Math.floor((d - EPOCH) / 86400000) % POOL_SIZE) + 1;
+function formatDate(d) {
+  return d.toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
 }
 
 // ─── EVALUATE ────────────────────────────────────────────────────────────────
@@ -287,29 +210,27 @@ const STYLES = `
   --absent: #787c7e;
 }
 
-body {
+/* Wrapper principale — si adatta a qualsiasi altezza disponibile */
+.wordle-root {
   background: var(--bg);
   color: var(--text);
   font-family: 'Inter', sans-serif;
-  height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  overflow: hidden;
+  width: 100%;
+  min-height: 100svh;
 }
 
-/* ── Animazioni ── */
 @keyframes confettiFall {
-  0%   { transform: translateY(-10px) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  0%   { transform: translateY(-10px) rotate(0deg); opacity:1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity:0; }
 }
-@keyframes flipDown {
-  0%   { transform: rotateX(0deg); }
-  100% { transform: rotateX(-90deg); }
-}
-@keyframes flipUp {
-  0%   { transform: rotateX(-90deg); }
-  100% { transform: rotateX(0deg); }
+/* Rivelazione cella: scala + fade */
+@keyframes revealCell {
+  0%   { transform: scale(0.8); opacity: 0; }
+  60%  { transform: scale(1.08); }
+  100% { transform: scale(1); opacity: 1; }
 }
 @keyframes shake {
   0%,100% { transform: translateX(0); }
@@ -322,71 +243,77 @@ body {
   100% { transform: scale(1); }
 }
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity:0; transform:translateY(-8px); }
+  to   { opacity:1; transform:translateY(0); }
 }
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity:0; transform:translateY(20px); }
+  to   { opacity:1; transform:translateY(0); }
 }
 
 /* ── Header ── */
 .header {
   width: 100%;
-  max-width: 500px;
+  max-width: 480px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 16px;
+  padding: 10px 16px 8px;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
+.header-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
 .header-title {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 26px;
-  letter-spacing: 4px;
+  font-size: 24px;
+  letter-spacing: 3px;
+  line-height: 1;
 }
-.header-sub {
-  font-size: 11px;
+.header-date {
+  font-size: 10px;
   color: var(--muted);
-  font-family: 'Bebas Neue', sans-serif;
-  letter-spacing: 1px;
-  text-align: center;
+  letter-spacing: 0.5px;
+  text-transform: lowercase;
 }
 .icon-btn {
   background: none; border: none; cursor: pointer;
-  color: var(--muted); font-size: 20px; padding: 4px;
-  transition: color .2s;
-  line-height: 1;
+  color: var(--muted); font-size: 18px; padding: 4px;
+  transition: color .2s; line-height: 1; min-width: 28px;
+  display: flex; align-items: center; justify-content: center;
 }
 .icon-btn:hover { color: var(--text); }
-.header-btns { display: flex; gap: 8px; }
+.header-btns { display: flex; gap: 6px; }
 
 /* ── Toast ── */
 .toast-container {
-  position: fixed; top: 64px; left: 50%; transform: translateX(-50%);
+  position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
   display: flex; flex-direction: column; align-items: center; gap: 8px;
   z-index: 100; pointer-events: none;
 }
 .toast {
   background: var(--text); color: var(--bg);
-  font-weight: 700; font-size: 14px;
-  padding: 10px 18px; border-radius: 6px;
+  font-weight: 700; font-size: 13px;
+  padding: 9px 16px; border-radius: 6px;
   animation: fadeIn .2s ease both;
+  white-space: nowrap;
 }
 
-/* ── Layout centrale: griglia + tastiera compatti ── */
+/* ── Game area — tutto centrato ── */
 .game-area {
   flex: 1;
   width: 100%;
-  max-width: 500px;
+  max-width: 480px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 8px 8px 12px;
-  overflow: hidden;
+  gap: 16px;
+  padding: 12px 8px 16px;
 }
 
 /* ── Board ── */
@@ -394,56 +321,50 @@ body {
   display: flex;
   flex-direction: column;
   gap: 5px;
+  align-items: center;
 }
 .board.shake { animation: shake .4s ease; }
 .board-row { display: flex; gap: 5px; }
 
 /* ── Celle ── */
 .cell {
-  width: 58px; height: 58px;
-  position: relative;
-  flex-shrink: 0;
-}
-.cell-face {
-  position: absolute; inset: 0;
+  width: 56px; height: 56px;
   display: flex; align-items: center; justify-content: center;
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 30px;
+  font-size: 28px;
   border: 2px solid var(--border);
-  background: var(--bg); color: var(--text);
+  background: var(--bg);
+  color: var(--text);
   user-select: none;
+  transition: border-color .1s;
 }
-.cell.filled .cell-face { border-color: #565758; animation: pop .1s ease; }
-.cell.revealed .cell-face {
-  background: var(--status); border-color: var(--status); color: #fff;
+.cell.filled {
+  border-color: #565758;
+  animation: pop .1s ease;
 }
-/* Flip fase 1 — scende, una cella per volta */
-.cell.flip-down .cell-face {
-  animation: flipDown .2s ease var(--delay) both;
-}
-/* Flip fase 2 — risale con colore, una cella per volta */
-.cell.flip-up .cell-face {
-  background: var(--status); border-color: var(--status); color: #fff;
-  transform: rotateX(-90deg);
-  animation: flipUp .2s ease var(--delay) both;
+.cell.revealed {
+  border-color: var(--status);
+  background: var(--status);
+  color: #fff;
+  animation: revealCell .25s ease var(--delay) both;
 }
 
 /* ── Tastiera ── */
 .keyboard {
   width: 100%;
+  max-width: 480px;
   display: flex; flex-direction: column; gap: 6px;
-  flex-shrink: 0;
 }
 .kb-row { display: flex; justify-content: center; gap: 5px; }
 .kb-key {
-  height: 54px; min-width: 38px; max-width: 38px; flex: 1;
+  height: 52px; min-width: 36px; max-width: 36px; flex: 1;
   border-radius: 4px; border: none;
   background: #818384; color: #fff;
   font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
-  cursor: pointer; transition: background .3s, transform .1s;
+  cursor: pointer; transition: background .25s, transform .1s;
   user-select: none;
 }
-.kb-key.wide { min-width: 60px; max-width: 60px; font-size: 11px; }
+.kb-key.wide { min-width: 58px; max-width: 58px; font-size: 11px; }
 .kb-key:active { transform: scale(.95); }
 .kb-key.kb-correct { background: var(--correct); }
 .kb-key.kb-present { background: var(--present); }
@@ -451,84 +372,79 @@ body {
 
 /* ── Modal ── */
 .overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,.75);
+  position: fixed; inset: 0; background: rgba(0,0,0,.78);
   display: flex; align-items: center; justify-content: center;
   z-index: 200; animation: fadeIn .2s ease;
 }
 .modal {
   background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-  width: 90%; max-width: 380px; padding: 24px 20px;
+  width: 90%; max-width: 360px; padding: 22px 18px;
   display: flex; flex-direction: column; align-items: center; gap: 14px;
   animation: slideUp .3s ease;
 }
-.modal h2 { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 2px; }
+.modal h2 { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 2px; }
 .modal p  { font-size: 13px; color: var(--muted); text-align: center; line-height: 1.5; }
 .modal-word {
-  font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 3px;
+  font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 3px;
   color: var(--correct);
 }
-.stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; width: 100%; }
-.stat-box { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.stat-num { font-family: 'Bebas Neue', sans-serif; font-size: 30px; }
+.stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; width: 100%; }
+.stat-box   { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.stat-num   { font-family: 'Bebas Neue', sans-serif; font-size: 28px; }
 .stat-label { font-size: 10px; color: var(--muted); text-align: center; }
-.dist-wrap { width: 100%; }
-.dist-row { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 4px; }
-.dist-num { width: 12px; text-align: right; color: var(--muted); font-weight: 700; }
-.dist-bar {
+.dist-wrap  { width: 100%; }
+.dist-row   { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 3px; }
+.dist-num   { width: 12px; text-align: right; color: var(--muted); font-weight: 700; }
+.dist-bar   {
   height: 18px; min-width: 18px; background: var(--absent); border-radius: 3px;
   display: flex; align-items: center; justify-content: flex-end; padding-right: 5px;
   font-size: 11px; font-weight: 700; transition: width .5s ease;
 }
 .dist-bar.current { background: var(--correct); }
 .btn {
-  padding: 11px 22px; border-radius: 6px; border: none;
+  padding: 10px 20px; border-radius: 6px; border: none;
   font-family: 'Inter', sans-serif; font-weight: 700; font-size: 13px;
   cursor: pointer; transition: opacity .2s, transform .1s;
 }
 .btn:active { transform: scale(.97); }
 .btn-primary   { background: var(--correct); color: #fff; }
-.btn-secondary { background: var(--border); color: var(--text); }
-.btn-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.btn-secondary { background: var(--border);  color: var(--text); }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; width: 100%; }
 .share-box {
   background: var(--bg); border-radius: 8px; padding: 10px 14px;
-  font-family: monospace; font-size: 17px; letter-spacing: 2px;
+  font-family: monospace; font-size: 16px; letter-spacing: 2px;
   line-height: 1.4; text-align: center; border: 1px solid var(--border); white-space: pre;
+  width: 100%;
 }
 .tutorial-examples { display: flex; flex-direction: column; gap: 10px; width: 100%; }
 .tutorial-row { display: flex; gap: 4px; justify-content: center; }
 .tutorial-cell {
-  width: 44px; height: 44px;
+  width: 42px; height: 42px;
   display: flex; align-items: center; justify-content: center;
-  font-family: 'Bebas Neue', sans-serif; font-size: 24px;
-  border: 2px solid var(--border); border-radius: 3px;
+  font-family: 'Bebas Neue', sans-serif; font-size: 22px;
+  border: 2px solid var(--border); border-radius: 2px;
 }
 .tutorial-cell.correct { background: var(--correct); border-color: var(--correct); }
 .tutorial-cell.present { background: var(--present); border-color: var(--present); }
 .tutorial-cell.absent  { background: var(--absent);  border-color: var(--absent);  }
 .archive-wrap {
   display: flex; flex-wrap: wrap; gap: 6px;
-  max-height: 180px; overflow-y: auto; padding: 4px;
+  max-height: 160px; overflow-y: auto; padding: 2px; width: 100%;
 }
 .chip {
-  padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
   cursor: pointer; border: none; background: var(--border); color: var(--text);
   transition: background .2s;
 }
 .chip:hover { background: #5a5a5c; }
 .chip.today { background: var(--correct); color: #fff; }
 
-/* ── Responsive piccoli schermi ── */
-@media (max-height: 700px) {
-  .cell { width: 50px; height: 50px; }
-  .cell-face { font-size: 26px; }
-  .kb-key { height: 46px; }
-  .game-area { gap: 8px; }
-}
-@media (max-width: 360px) {
-  .cell { width: 50px; height: 50px; }
-  .cell-face { font-size: 26px; }
-  .kb-key { min-width: 32px; max-width: 32px; font-size: 10px; height: 48px; }
-  .kb-key.wide { min-width: 52px; max-width: 52px; }
+/* ── Responsive ── */
+@media (max-width: 380px) {
+  .cell { width: 50px; height: 50px; font-size: 24px; }
+  .kb-key { min-width: 30px; max-width: 30px; height: 46px; font-size: 10px; }
+  .kb-key.wide { min-width: 50px; max-width: 50px; }
+  .header-title { font-size: 20px; }
 }
 `;
 
@@ -541,13 +457,6 @@ const KB_ROWS = [
   ["INVIO","Z","X","C","V","B","N","M","⌫"]
 ];
 
-// Ogni cella flip: 200ms animazione + 300ms delay tra celle = ~300ms per cella
-// Cella 0: delay 0ms, cella 1: 300ms, ..., cella 4: 1200ms
-// Fine fase: 1200 + 200 = 1400ms per fase → totale ~2800ms
-const FLIP_CELL_STEP = 300;   // ms tra l'inizio di ogni cella
-const FLIP_ANIM_MS   = 200;   // durata animazione singola cella (uguale al CSS)
-const FLIP_PHASE_TOTAL = (5 - 1) * FLIP_CELL_STEP + FLIP_ANIM_MS + 50; // ~1450ms
-
 function statusColor(s) {
   if (s === "correct") return "var(--correct)";
   if (s === "present") return "var(--present)";
@@ -555,6 +464,7 @@ function statusColor(s) {
   return "transparent";
 }
 
+// ─── KEYBOARD ────────────────────────────────────────────────────────────────
 function Keyboard({ onKey, letterStates }) {
   return (
     <div className="keyboard">
@@ -578,22 +488,22 @@ function Keyboard({ onKey, letterStates }) {
 
 // ─── APP ────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [target, setTarget]         = useState("");
-  const [wordNum, setWordNum]       = useState(1);
-  const [archiveDate, setArchiveDate] = useState(null);
-  const [guesses, setGuesses]       = useState([]);
-  const [flipping, setFlipping]     = useState(null); // {word, result, phase:"down"|"up"}
-  const [current, setCurrent]       = useState("");
-  const [gameOver, setGameOver]     = useState(false);
-  const [won, setWon]               = useState(false);
-  const [toasts, setToasts]         = useState([]);
-  const [shaking, setShaking]       = useState(false);
-  const [modal, setModal]           = useState(null);
-  const [stats, setStats]           = useState({
-    played:0, wins:0, streak:0, maxStreak:0,
-    dist:{1:0,2:0,3:0,4:0,5:0,6:0}
+  const [target, setTarget]           = useState("");
+  const [dateLabel, setDateLabel]     = useState("");
+  const [archiveDate, setArchiveDate] = useState(null); // null = oggi
+  const [guesses, setGuesses]         = useState([]);
+  const [revealingRow, setRevealingRow] = useState(null); // {word, result} — in rivelazione
+  const [revealedCells, setRevealedCells] = useState(0); // quante celle della riga corrente sono già rivelate
+  const [current, setCurrent]         = useState("");
+  const [gameOver, setGameOver]       = useState(false);
+  const [won, setWon]                 = useState(false);
+  const [toasts, setToasts]           = useState([]);
+  const [shaking, setShaking]         = useState(false);
+  const [modal, setModal]             = useState(null);
+  const [stats, setStats]             = useState({
+    played:0, wins:0, streak:0, maxStreak:0, dist:{1:0,2:0,3:0,4:0,5:0,6:0}
   });
-  const [hardMode, setHardMode]     = useState(false);
+  const [hardMode, setHardMode]       = useState(false);
   const guessesRef = useRef(guesses);
   useEffect(() => { guessesRef.current = guesses; }, [guesses]);
 
@@ -611,12 +521,14 @@ export default function App() {
     }
   }, []);
 
-  // ── Carica partita ──
+  // ── Carica partita per data ──
   const loadGame = useCallback((date) => {
     const seed = seedFromDate(date);
     setTarget(getWordleWord(seed));
-    setWordNum(dayNum(date));
-    setFlipping(null); setCurrent("");
+    setDateLabel(formatDate(date));
+    setRevealingRow(null);
+    setRevealedCells(0);
+    setCurrent("");
     try {
       const saved = JSON.parse(localStorage.getItem(LS+"game_"+seed)||"null");
       if (saved && Array.isArray(saved.guesses) && saved.guesses.length > 0) {
@@ -637,14 +549,14 @@ export default function App() {
   // ── Toast ──
   const toast = useCallback((msg, dur=2000) => {
     const id = Date.now() + Math.random();
-    setToasts(t => [{id,msg}, ...t]);
+    setToasts(t => [{id,msg},...t]);
     setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), dur);
   }, []);
 
-  // ── Lettera stati ──
+  // ── Lettera stati tastiera ──
   const letterStates = (() => {
     const map = {};
-    const all = [...guesses, ...(flipping ? [flipping] : [])];
+    const all = [...guesses, ...(revealingRow ? [revealingRow] : [])];
     for (const g of all) {
       if (!g.result) continue;
       g.result.forEach((r, i) => {
@@ -656,25 +568,30 @@ export default function App() {
     return map;
   })();
 
-  // ── Flip lento: cella per cella ──
-  // delay per ogni cella = col * FLIP_CELL_STEP
-  // Fase "down": tutte e 5 le celle scendono in sequenza
-  // Dopo FLIP_PHASE_TOTAL ms → fase "up": risalgono con colore
-  // Dopo altri FLIP_PHASE_TOTAL ms → fine, aggiungi a guesses
-  function runFlip(newGuess, onDone) {
-    setFlipping({ ...newGuess, phase: "down" });
-    setTimeout(() => {
-      setFlipping({ ...newGuess, phase: "up" });
-      setTimeout(() => {
-        setFlipping(null);
-        onDone();
-      }, FLIP_PHASE_TOTAL);
-    }, FLIP_PHASE_TOTAL);
+  // ── Rivelazione cella per cella ──
+  // Ogni 250ms una cella in più diventa colorata, fino a 5.
+  // Poi la riga viene "fissata" nelle guesses.
+  function revealSequentially(newGuess, onDone) {
+    setRevealingRow(newGuess);
+    setRevealedCells(0);
+    let col = 0;
+    const interval = setInterval(() => {
+      col++;
+      setRevealedCells(col);
+      if (col >= 5) {
+        clearInterval(interval);
+        setTimeout(() => {
+          setRevealingRow(null);
+          setRevealedCells(0);
+          onDone();
+        }, 100);
+      }
+    }, 300); // 300ms tra una cella e l'altra
   }
 
   // ── Submit ──
   const submitGuess = useCallback(() => {
-    if (gameOver || flipping) return;
+    if (gameOver || revealingRow) return;
     const norm = current.toUpperCase().replace(/[^A-Z]/g, "");
     if (norm.length !== 5) {
       toast("La parola deve avere 5 lettere");
@@ -686,32 +603,32 @@ export default function App() {
       for (let i = 0; i < 5; i++) {
         if (last.result[i] === "correct" && norm[i] !== last.word[i]) {
           toast(`La ${i+1}ª lettera deve essere ${last.word[i]}`);
-          setShaking(true); setTimeout(() => setShaking(false), 400);
-          return;
+          setShaking(true); setTimeout(() => setShaking(false), 400); return;
         }
       }
       const pn = last.word.split("").filter((_,i) => last.result[i] === "present");
       for (const l of pn) {
         if (!norm.includes(l)) {
           toast(`La parola deve contenere ${l}`);
-          setShaking(true); setTimeout(() => setShaking(false), 400);
-          return;
+          setShaking(true); setTimeout(() => setShaking(false), 400); return;
         }
       }
     }
+
     const result = evaluate(norm, target);
     const newGuess = { word: norm, result };
     const attemptNum = guessesRef.current.length + 1;
     setCurrent("");
-    runFlip(newGuess, () => {
+
+    revealSequentially(newGuess, () => {
       setGuesses(prev => {
         const next = [...prev, newGuess];
-        const isWin = result.every(r => r === "correct");
+        const isWin  = result.every(r => r === "correct");
         const isLose = !isWin && next.length >= MAX_GUESSES;
         if (isWin) {
           setWon(true); setGameOver(true);
           spawnConfetti();
-          toast(WIN_MSGS[Math.min(attemptNum - 1, WIN_MSGS.length - 1)], 2500);
+          toast(WIN_MSGS[Math.min(attemptNum-1, WIN_MSGS.length-1)], 2500);
           updateStats(true, attemptNum);
           setTimeout(() => setModal("end"), 2000);
         } else if (isLose) {
@@ -723,13 +640,13 @@ export default function App() {
         return next;
       });
     });
-  }, [gameOver, flipping, current, target, hardMode, toast]);
+  }, [gameOver, revealingRow, current, target, hardMode, toast]);
 
   function updateStats(win, guessCount) {
     setStats(prev => {
-      const d = { ...prev.dist };
-      if (win) d[guessCount] = (d[guessCount] || 0) + 1;
-      const streak = win ? prev.streak + 1 : 0;
+      const d = {...prev.dist};
+      if (win) d[guessCount] = (d[guessCount]||0) + 1;
+      const streak = win ? prev.streak+1 : 0;
       const maxStreak = Math.max(prev.maxStreak, streak);
       const next = { played: prev.played+1, wins: prev.wins+(win?1:0), streak, maxStreak, dist: d };
       localStorage.setItem(LS+"stats", JSON.stringify(next));
@@ -739,23 +656,36 @@ export default function App() {
 
   // ── Tastiera fisica ──
   const handleKey = useCallback((k) => {
-    if (gameOver || flipping) return;
-    if (k === "⌫" || k === "Backspace") { setCurrent(c => c.slice(0, -1)); }
+    if (gameOver || revealingRow) return;
+    if (k === "⌫" || k === "Backspace") { setCurrent(c => c.slice(0,-1)); }
     else if (k === "INVIO" || k === "Enter") { submitGuess(); }
     else if (/^[A-Za-z]$/.test(k) && current.length < 5) { setCurrent(c => c + k.toUpperCase()); }
-  }, [gameOver, flipping, current, submitGuess]);
+  }, [gameOver, revealingRow, current, submitGuess]);
 
   useEffect(() => {
-    const fn = (e) => handleKey(e.key === "Backspace" ? "⌫" : e.key === "Enter" ? "INVIO" : e.key);
+    const fn = (e) => handleKey(e.key==="Backspace"?"⌫":e.key==="Enter"?"INVIO":e.key);
     window.addEventListener("keydown", fn);
     return () => window.removeEventListener("keydown", fn);
   }, [handleKey]);
 
   // ── Share ──
   function buildShare() {
-    const h = `🇮🇹 Wordle Italiano #${wordNum}\n`;
-    const r = guesses.map(g => g.result.map(r => r==="correct"?"🟩":r==="present"?"🟨":"⬛").join("")).join("\n");
+    const h = `🇮🇹 Wordle Italiano — ${dateLabel}\n`;
+    const r = guesses.map(g =>
+      g.result.map(r => r==="correct"?"🟩":r==="present"?"🟨":"⬛").join("")
+    ).join("\n");
     return h + r + (won ? "" : " X") + `/${MAX_GUESSES}`;
+  }
+
+  // ── Gioca ancora (random dall'archivio) ──
+  function playRandom() {
+    const today = new Date();
+    // Sceglie un giorno random tra gli ultimi 30 escludendo oggi
+    const offset = 1 + Math.floor(Math.random() * 29);
+    const d = new Date(today);
+    d.setDate(today.getDate() - offset);
+    setArchiveDate(d);
+    setModal(null);
   }
 
   // ── Render griglia ──
@@ -763,48 +693,55 @@ export default function App() {
     const rows = [];
     for (let r = 0; r < MAX_GUESSES; r++) {
       if (r < guesses.length) {
+        // Riga già completata
         const g = guesses[r];
         rows.push(
           <div className="board-row" key={r}>
             {g.word.split("").map((l, i) => (
               <div key={i} className="cell revealed"
-                style={{ "--status": statusColor(g.result[i]) }}>
-                <div className="cell-face">{l}</div>
+                style={{ "--status": statusColor(g.result[i]), "--delay": "0ms" }}>
+                {l}
               </div>
             ))}
           </div>
         );
-      } else if (flipping && r === guesses.length) {
+      } else if (revealingRow && r === guesses.length) {
+        // Riga in rivelazione cella per cella
         rows.push(
           <div className="board-row" key={r}>
-            {flipping.word.split("").map((l, i) => (
-              <div key={i}
-                className={`cell flip-${flipping.phase}`}
-                style={{
-                  "--delay": `${i * FLIP_CELL_STEP}ms`,
-                  "--status": statusColor(flipping.result[i])
-                }}>
-                <div className="cell-face">{l}</div>
-              </div>
-            ))}
+            {revealingRow.word.split("").map((l, i) => {
+              const isRevealed = i < revealedCells;
+              return (
+                <div key={i}
+                  className={`cell${isRevealed ? " revealed" : " filled"}`}
+                  style={isRevealed ? {
+                    "--status": statusColor(revealingRow.result[i]),
+                    "--delay": "0ms"
+                  } : {}}>
+                  {l}
+                </div>
+              );
+            })}
           </div>
         );
-      } else if (!gameOver && !flipping && r === guesses.length) {
+      } else if (!gameOver && !revealingRow && r === guesses.length) {
+        // Riga corrente (input utente)
         const letters = current.padEnd(5, " ").split("");
         rows.push(
           <div className="board-row" key={r}>
             {letters.map((l, i) => (
               <div key={i} className={`cell${l !== " " ? " filled" : ""}`}>
-                <div className="cell-face">{l === " " ? "" : l}</div>
+                {l === " " ? "" : l}
               </div>
             ))}
           </div>
         );
       } else {
+        // Riga vuota
         rows.push(
           <div className="board-row" key={r}>
             {Array(5).fill("").map((_, i) => (
-              <div key={i} className="cell"><div className="cell-face"></div></div>
+              <div key={i} className="cell"></div>
             ))}
           </div>
         );
@@ -822,7 +759,7 @@ export default function App() {
           <h2>📊 Statistiche</h2>
           <div className="stats-grid">
             <div className="stat-box"><span className="stat-num">{stats.played}</span><span className="stat-label">Partite</span></div>
-            <div className="stat-box"><span className="stat-num">{stats.played ? Math.round(stats.wins/stats.played*100) : 0}%</span><span className="stat-label">Vittorie</span></div>
+            <div className="stat-box"><span className="stat-num">{stats.played?Math.round(stats.wins/stats.played*100):0}%</span><span className="stat-label">Vittorie</span></div>
             <div className="stat-box"><span className="stat-num">{stats.streak}</span><span className="stat-label">Serie</span></div>
             <div className="stat-box"><span className="stat-num">{stats.maxStreak}</span><span className="stat-label">Migliore</span></div>
           </div>
@@ -831,7 +768,7 @@ export default function App() {
               <div className="dist-row" key={n}>
                 <span className="dist-num">{n}</span>
                 <div className={`dist-bar${guesses.length===n&&won?" current":""}`}
-                  style={{ width: `${Math.max(18, (stats.dist[n]||0)/maxBar*170)}px` }}>
+                  style={{ width: `${Math.max(18,(stats.dist[n]||0)/maxBar*160)}px` }}>
                   {stats.dist[n]||0}
                 </div>
               </div>
@@ -880,7 +817,9 @@ export default function App() {
     const [copied, setCopied] = useState(false);
     const text = buildShare();
     function copy() {
-      navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
+      navigator.clipboard.writeText(text).then(() => {
+        setCopied(true); setTimeout(() => setCopied(false), 2000);
+      });
     }
     return (
       <div className="overlay" onClick={() => setModal(null)}>
@@ -889,9 +828,20 @@ export default function App() {
           {!won && <><p>La parola era:</p><div className="modal-word">{target}</div></>}
           <div className="share-box">{text}</div>
           <div className="btn-row">
-            <button className="btn btn-primary" onClick={copy}>{copied ? "✓ Copiato!" : "Condividi"}</button>
-            <button className="btn btn-secondary" onClick={() => setModal("stats")}>Statistiche</button>
-            <button className="btn btn-secondary" onClick={() => setModal("archive")}>Archivio</button>
+            <button className="btn btn-primary" onClick={copy}>
+              {copied ? "✓ Copiato!" : "Condividi"}
+            </button>
+            <button className="btn btn-secondary" onClick={() => setModal("stats")}>
+              Statistiche
+            </button>
+          </div>
+          <div className="btn-row">
+            <button className="btn btn-secondary" onClick={playRandom}>
+              🎲 Gioca ancora
+            </button>
+            <button className="btn btn-secondary" onClick={() => setModal("archive")}>
+              📅 Archivio
+            </button>
           </div>
         </div>
       </div>
@@ -903,7 +853,9 @@ export default function App() {
     const today = new Date();
     for (let i = 0; i < 30; i++) {
       const d = new Date(today); d.setDate(today.getDate() - i);
-      const label = i === 0 ? "Oggi" : d.toLocaleDateString("it-IT", {day:"2-digit",month:"2-digit"});
+      const label = i === 0
+        ? "Oggi"
+        : d.toLocaleDateString("it-IT", {day:"2-digit", month:"2-digit"});
       chips.push({ d, label, isToday: i === 0 });
     }
     return (
@@ -913,7 +865,7 @@ export default function App() {
           <p>Gioca le sfide degli ultimi 30 giorni</p>
           <div className="archive-wrap">
             {chips.map(({ d, label, isToday }, i) => (
-              <button key={i} className={`chip${isToday ? " today" : ""}`}
+              <button key={i} className={`chip${isToday?" today":""}`}
                 onClick={() => { setArchiveDate(isToday ? null : d); setModal(null); }}>
                 {label}
               </button>
@@ -935,20 +887,20 @@ export default function App() {
   return (
     <>
       <style>{STYLES}</style>
-      <div style={{ width:"100%", maxWidth:"500px", height:"100dvh", display:"flex", flexDirection:"column" }}>
+      <div className="wordle-root">
 
         {/* Header */}
         <header className="header">
-          <button className="icon-btn" onClick={() => setModal("tutorial")}>?</button>
-          <div style={{ display:"flex", flexDirection:"column", alignItems:"center" }}>
+          <button className="icon-btn" onClick={() => setModal("tutorial")} title="Come si gioca">?</button>
+          <div className="header-center">
             <span className="header-title">🇮🇹 WORDLE ITALIANO</span>
-            <span className="header-sub">#{wordNum}</span>
+            <span className="header-date">{dateLabel}</span>
           </div>
           <div className="header-btns">
-            <button className="icon-btn" onClick={toggleHard}
-              style={{ fontSize:"16px", color: hardMode ? "#f5a000" : "var(--muted)" }}>🔥</button>
-            <button className="icon-btn" onClick={() => setModal("stats")}>📊</button>
-            <button className="icon-btn" onClick={() => setModal("archive")}>📅</button>
+            <button className="icon-btn" onClick={toggleHard} title={hardMode?"Difficile ON":"Difficile OFF"}
+              style={{ color: hardMode ? "#f5a000" : "var(--muted)" }}>🔥</button>
+            <button className="icon-btn" onClick={() => setModal("stats")} title="Statistiche">📊</button>
+            <button className="icon-btn" onClick={() => setModal("archive")} title="Archivio">📅</button>
           </div>
         </header>
 
@@ -957,7 +909,7 @@ export default function App() {
           {toasts.map(t => <div key={t.id} className="toast">{t.msg}</div>)}
         </div>
 
-        {/* Griglia + Tastiera centrate */}
+        {/* Griglia + Tastiera */}
         <div className="game-area">
           <div className={`board${shaking ? " shake" : ""}`}>
             {renderRows()}
