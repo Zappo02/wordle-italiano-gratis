@@ -285,14 +285,6 @@ const STYLES = `
 .light .cell.current-row.filled{border-color:#444}
 
 /* Input nascosto per tastiera nativa */
-.hidden-input{
-  position:absolute;opacity:0;width:1px;height:1px;
-  top:50%;left:50%;pointer-events:none;
-  font-size:16px; /* Evita zoom automatico su iOS */
-  border:none;outline:none;background:transparent;
-  /* autocomplete e autocorrect disabilitati */
-}
-
 /* Contatore */
 .attempt-counter{
   font-size:11px;color:var(--muted);font-weight:600;
@@ -431,14 +423,7 @@ function statusColor(s) {
 }
 
 // ─── KEYBOARD ────────────────────────────────────────────────────────────────
-const Keyboard = memo(function Keyboard({onKey, letterStates, inputRef}) {
-  const handlePress = useCallback((k) => {
-    // Sfoca l'input nascosto prima di processare il tasto,
-    // così non riceve anche lui il carattere dalla tastiera nativa
-    inputRef?.current?.blur();
-    onKey(k);
-  }, [onKey, inputRef]);
-
+const Keyboard = memo(function Keyboard({onKey, letterStates}) {
   return (
     <div className="keyboard">
       {KB_ROWS.map((row,ri) => (
@@ -448,7 +433,7 @@ const Keyboard = memo(function Keyboard({onKey, letterStates, inputRef}) {
             return (
               <button key={k}
                 className={`kb-key${k.length>1?" wide":""}${st?` kb-${st}`:""}`}
-                onClick={() => handlePress(k)}>
+                onClick={() => onKey(k)}>
                 {k}
               </button>
             );
@@ -632,7 +617,6 @@ export default function App() {
   const [streakPulse,setStreakPulse]     = useState(false);
 
   const guessesRef  = useRef(guesses);
-  const inputRef    = useRef(null);  // input nascosto per tastiera nativa
   const gameOverRef = useRef(gameOver);
   const revealRef   = useRef(revealingRow);
 
@@ -751,8 +735,6 @@ export default function App() {
     const newGuess = {word:norm, result};
     const attemptNum = guessesRef.current.length+1;
     setCurrent("");
-    // Resetta e ri-focalizza l'input nascosto
-    if (inputRef.current) { inputRef.current.value = ""; }
     localStorage.removeItem(LS+"draft_"+seedFromDate(archiveDate||new Date()));
     revealSequentially(newGuess, () => {
       setGuesses(prev => {
@@ -812,29 +794,6 @@ export default function App() {
     window.addEventListener("keydown",fn);
     return () => window.removeEventListener("keydown",fn);
   }, [handleKey]);
-
-  // Input nascosto per tastiera nativa mobile
-  // Intercetta ogni carattere digitato e lo invia a handleKey
-  const handleNativeInput = useCallback((e) => {
-    const val = e.target.value;
-    if (!val) return;
-    // Ogni carattere inserito viene processato
-    for (const ch of val) {
-      if (/^[A-Za-zàáèéìíòóùú]$/.test(ch)) handleKey(ch);
-    }
-    e.target.value = "";
-  }, [handleKey]);
-
-  const handleNativeKeyDown = useCallback((e) => {
-    if (e.key === "Backspace") { e.preventDefault(); handleKey("⌫"); }
-    if (e.key === "Enter")     { e.preventDefault(); handleKey("INVIO"); }
-  }, [handleKey]);
-
-  // Focus sull'input nascosto quando si tocca la griglia
-  const focusInput = useCallback(() => {
-    if (gameOver || modal) return;
-    inputRef.current?.focus();
-  }, [gameOver, modal]);
 
   const buildShare = useCallback(() => {
     const header = `Wordle Italiano — ${dateLabel}`;
@@ -918,22 +877,6 @@ export default function App() {
       <style>{STYLES}</style>
       <div className={`wordle-root${lightMode?" light":""}`}>
 
-        {/* Input nascosto — cattura tastiera nativa mobile */}
-        <input
-          ref={inputRef}
-          className="hidden-input"
-          type="text"
-          inputMode="text"
-          autoComplete="off"
-          autoCorrect="off"
-          autoCapitalize="characters"
-          spellCheck="false"
-          onInput={handleNativeInput}
-          onKeyDown={handleNativeKeyDown}
-          readOnly={gameOver}
-          aria-hidden="true"
-        />
-
         <header className="header">
           <div className="header-left">
             <button className="icon-btn" onClick={()=>setModal("tutorial")} title="Come si gioca">?</button>
@@ -971,11 +914,11 @@ export default function App() {
 
         <div className="game-area">
           {/* Tap sulla griglia → focus input nascosto → tastiera nativa */}
-          <div className={`board${shaking?" shake":""}`} onClick={focusInput}>
+          <div className={`board${shaking?" shake":""}`}>
             {renderRows()}
           </div>
           <div className="attempt-counter">{attemptText}</div>
-          <Keyboard onKey={handleKey} letterStates={letterStates} inputRef={inputRef}/>
+          <Keyboard onKey={handleKey} letterStates={letterStates}/>
         </div>
 
       </div>
