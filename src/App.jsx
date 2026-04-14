@@ -296,25 +296,31 @@ const STYLES = `
   letter-spacing:.5px;text-align:center;min-height:15px;
 }
 
-/* Tastiera visuale — tasti più grandi */
-.keyboard{width:100%;max-width:480px;display:flex;flex-direction:column;gap:8px;flex-shrink:0}
-.kb-row{display:flex;justify-content:center;gap:7px}
+/* Tastiera visuale */
+.keyboard{
+  width:100%;max-width:500px;
+  display:flex;flex-direction:column;gap:8px;
+  flex-shrink:0;
+  padding:0 4px;
+}
+.kb-row{display:flex;justify-content:center;gap:4px}
 .kb-key{
-  height:clamp(46px,12vw,58px);
-  min-width:clamp(30px,8vw,40px);
-  max-width:clamp(30px,8vw,40px);
-  flex:1;border-radius:5px;border:none;
+  flex:1;
+  height:clamp(46px,12vw,56px);
+  min-width:0; /* lascia che flex decida */
+  border-radius:5px;border:none;
   background:#818384;color:#fff;
   font-family:'Inter',sans-serif;
-  font-size:clamp(11px,3vw,14px);
+  font-size:clamp(12px,3.2vw,15px);
   font-weight:700;cursor:pointer;
-  transition:background .25s,transform .1s;user-select:none;
-  touch-action:manipulation;
+  transition:background .25s,transform .1s;
+  user-select:none;touch-action:manipulation;
+  /* Nessun padding laterale — massimizza la superficie toccabile */
+  padding:0;
 }
 .kb-key.wide{
-  min-width:clamp(50px,13vw,66px);
-  max-width:clamp(50px,13vw,66px);
-  font-size:clamp(9px,2.5vw,11px);
+  flex:1.6; /* INVIO e ⌫ più larghi proporzionalmente */
+  font-size:clamp(9px,2.4vw,11px);
 }
 .kb-key:active{transform:scale(.94)}
 .kb-key.kb-correct{background:var(--correct)}
