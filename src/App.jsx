@@ -788,29 +788,29 @@ export default function App() {
     }
   }, [current, submitGuess]);
 
-  // Tastiera fisica del computer
+  // Un solo handler per tutti gli eventi tastiera (fisica + nativa mobile).
+  // L'input nascosto ha e.stopPropagation() così NON arriva al window listener.
+  const inputFocusedRef = useRef(false);
+
   useEffect(() => {
     const fn = (e) => {
+      // Se l'evento viene dall'input nascosto, lo gestiamo lì — non qui
+      if (inputFocusedRef.current) return;
       if (e.ctrlKey||e.metaKey||e.altKey) return;
       handleKey(e.key==="Backspace"?"⌫":e.key==="Enter"?"INVIO":e.key);
     };
-    window.addEventListener("keydown",fn);
-    return () => window.removeEventListener("keydown",fn);
+    window.addEventListener("keydown", fn);
+    return () => window.removeEventListener("keydown", fn);
   }, [handleKey]);
 
-  // Tastiera nativa mobile: input trasparente, intercetta SOLO keydown
-  // NON usa onInput/onChange così non duplica mai i caratteri
+  // Handler dell'input nascosto — stopPropagation impedisce che l'evento
+  // raggiunga anche il window listener sopra
   const handleNativeKeyDown = useCallback((e) => {
-    // Su mobile keydown arriva per ogni tasto — gestiamo tutto qui
-    if (e.key === "Backspace") { e.preventDefault(); handleKey("⌫"); return; }
-    if (e.key === "Enter")     { e.preventDefault(); handleKey("INVIO"); return; }
-    // Lettere: normalize e passa a handleKey
-    const k = e.key;
-    if (k && k.length === 1) {
-      e.preventDefault();
-      handleKey(k);
-    }
-    // Resetta il valore dell'input così non accumula testo
+    e.stopPropagation(); // blocca il window listener
+    if (e.ctrlKey||e.metaKey||e.altKey) return;
+    if (e.key === "Backspace") { e.preventDefault(); handleKey("⌫"); }
+    else if (e.key === "Enter") { e.preventDefault(); handleKey("INVIO"); }
+    else if (e.key && e.key.length === 1) { e.preventDefault(); handleKey(e.key); }
     e.target.value = "";
   }, [handleKey]);
 
@@ -939,7 +939,7 @@ export default function App() {
             style={{
               position:"absolute", opacity:0, width:1, height:1,
               top:0, left:0, pointerEvents:"none",
-              fontSize:16, // evita zoom iOS
+              fontSize:16,
             }}
             type="text"
             inputMode="text"
@@ -948,6 +948,8 @@ export default function App() {
             autoCapitalize="characters"
             spellCheck="false"
             readOnly={gameOver || !!modal}
+            onFocus={() => { inputFocusedRef.current = true; }}
+            onBlur={() => { inputFocusedRef.current = false; }}
             onKeyDown={handleNativeKeyDown}
             aria-hidden="true"
           />
