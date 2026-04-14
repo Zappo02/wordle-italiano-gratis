@@ -123,7 +123,59 @@ function spawnConfetti() {
   }
 }
 
-// ─── COUNTDOWN ───────────────────────────────────────────────────────────────
+// ─── STREAK — robusta anche dopo pulizia cache Safari ────────────────────────
+// Strategia doppia:
+// 1. Se i game sono presenti in localStorage → conta dai dati reali (computeStreak)
+// 2. Se i game sono stati cancellati (es. Safari 7gg) ma stats è sopravvissuto
+//    → usa streakSnapshot se lastWonDate era ieri o oggi
+function computeStreak() {
+  const today = new Date();
+  let streak = 0;
+  const todaySeed = seedFromDate(today);
+  let todayWon = false;
+  try {
+    const t = JSON.parse(localStorage.getItem(LS+"game_"+todaySeed)||"null");
+    todayWon = t?.won === true;
+  } catch {}
+
+  const startOffset = todayWon ? 0 : 1;
+  for (let i = startOffset; i <= 365; i++) {
+    const d = new Date(today); d.setDate(today.getDate() - i);
+    try {
+      const saved = JSON.parse(localStorage.getItem(LS+"game_"+seedFromDate(d))||"null");
+      if (saved?.won === true) { streak++; }
+      else { break; }
+    } catch { break; }
+  }
+  return streak;
+}
+
+// Restituisce la streak da usare all'avvio, combinando dati reali e snapshot
+function resolveStreak(savedStats) {
+  const liveStreak = computeStreak();
+
+  // Se computeStreak trova almeno qualcosa, fidati di quello
+  if (liveStreak > 0) return liveStreak;
+
+  // I game sono stati cancellati — prova a recuperare dal snapshot
+  if (!savedStats?.streakSnapshot || !savedStats?.lastWonDate) return 0;
+
+  const lastWon = new Date(savedStats.lastWonDate);
+  const today = new Date();
+  const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+
+  const sameDay = (a, b) =>
+    a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+
+  // Il snapshot è valido solo se l'ultima vittoria era ieri o oggi
+  // (altrimenti la catena si è già interrotta indipendentemente dalla cache)
+  if (sameDay(lastWon, today) || sameDay(lastWon, yesterday)) {
+    return savedStats.streakSnapshot;
+  }
+  return 0;
+}
+
+
 const Countdown = memo(function Countdown() {
   const [time, setTime] = useState("--:--:--");
   useEffect(() => {
@@ -667,7 +719,13 @@ export default function App() {
       Object.keys(localStorage).filter(k=>k.startsWith("wi_")||k.startsWith("wi2_")).forEach(k=>localStorage.removeItem(k));
       localStorage.setItem(RESET_FLAG,"1");
     }
-    try { const s=JSON.parse(localStorage.getItem(LS+"stats")||"null"); if(s) setStats(s); } catch {}
+    try {
+      const s = JSON.parse(localStorage.getItem(LS+"stats")||"null");
+      if (s) {
+        const streak = resolveStreak(s);
+        setStats({...s, streak});
+      }
+    } catch {}
     setHardMode(localStorage.getItem(LS+"hard")==="1");
     setLightMode(localStorage.getItem(LS+"light")==="1");
     if (!localStorage.getItem(LS+"seen_tutorial")) {
@@ -775,13 +833,13 @@ export default function App() {
           setTimeout(()=>spawnConfetti(),250);
           if (navigator.vibrate) navigator.vibrate([50,30,50,30,100]);
           toast(WIN_MSGS[Math.min(attemptNum-1,WIN_MSGS.length-1)],2500);
-          updateStats(true,attemptNum);
+          updateStats(true, attemptNum, !!archiveDate);
           setTimeout(()=>setModal("end"),2200);
         } else if (isLose) {
           setGameOver(true);
           if (navigator.vibrate) navigator.vibrate([100,50,100]);
           toast(target,3500);
-          updateStats(false,0);
+          updateStats(false, 0, !!archiveDate);
           setTimeout(()=>setModal("end"),3200);
         }
         return next;
@@ -789,15 +847,26 @@ export default function App() {
     });
   }, [current, target, hardMode, archiveDate, toast]);
 
-  function updateStats(win, guessCount) {
+  function updateStats(win, guessCount, isArchive) {
     setStats(prev => {
       const d = {...prev.dist};
       if (win) d[guessCount] = (d[guessCount]||0)+1;
-      const streak = win ? prev.streak+1 : 0;
+      // Streak: ricalcola dai dati reali solo per la partita di oggi
+      const streak = isArchive ? prev.streak : computeStreak();
       const maxStreak = Math.max(prev.maxStreak, streak);
-      const next = {played:prev.played+1,wins:prev.wins+(win?1:0),streak,maxStreak,dist:d};
-      localStorage.setItem(LS+"stats",JSON.stringify(next));
-      if (win&&streak>1) { setStreakPulse(true); setTimeout(()=>setStreakPulse(false),500); }
+      // Salva snapshot streak + data ultima vittoria (per recupero dopo pulizia cache)
+      const lastWonDate = (win && !isArchive)
+        ? new Date().toISOString().split("T")[0]
+        : (prev.lastWonDate || null);
+      const streakSnapshot = (!isArchive) ? streak : (prev.streakSnapshot || 0);
+      const next = {
+        played: prev.played+1,
+        wins: prev.wins+(win?1:0),
+        streak, maxStreak, dist: d,
+        lastWonDate, streakSnapshot
+      };
+      localStorage.setItem(LS+"stats", JSON.stringify(next));
+      if (!isArchive && streak > 1) { setStreakPulse(true); setTimeout(()=>setStreakPulse(false),500); }
       return next;
     });
   }
