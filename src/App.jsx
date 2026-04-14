@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, memo } from "react";
 
-// ─── DATABASE — 684 parole italiane certe, 5 lettere ─────────────────────────
+// ─── DATABASE ─────────────────────────────────────────────────────────────────
 const WORDLE_POOL = [
   "ABETE","ABITO","ABUSO","ACETO","ACIDO","ACQUA","AGILE","AGIRE","AGLIO","AIUTO",
   "ALITO","ALONE","ALTRO","AMARO","AMBRA","AMICO","AMORE","AMPIA","AMPIO","ANIMA",
@@ -123,7 +123,7 @@ function spawnConfetti() {
   }
 }
 
-// ─── COUNTDOWN (componente isolato — non causa re-render del parent) ──────────
+// ─── COUNTDOWN ───────────────────────────────────────────────────────────────
 const Countdown = memo(function Countdown() {
   const [time, setTime] = useState("--:--:--");
   useEffect(() => {
@@ -142,6 +142,22 @@ const Countdown = memo(function Countdown() {
   }, []);
   return <span className="countdown-time">{time}</span>;
 });
+
+// ─── SWIPE-DOWN hook per chiudere modal ───────────────────────────────────────
+function useSwipeDown(onSwipe) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let startY = 0;
+    const onTouchStart = (e) => { startY = e.touches[0].clientY; };
+    const onTouchEnd = (e) => { if (e.changedTouches[0].clientY - startY > 60) onSwipe(); };
+    el.addEventListener("touchstart", onTouchStart, {passive:true});
+    el.addEventListener("touchend", onTouchEnd, {passive:true});
+    return () => { el.removeEventListener("touchstart",onTouchStart); el.removeEventListener("touchend",onTouchEnd); };
+  }, [onSwipe]);
+  return ref;
+}
 
 // ─── STYLES ──────────────────────────────────────────────────────────────────
 const STYLES = `
@@ -169,7 +185,10 @@ const STYLES = `
   background:var(--bg);color:var(--text);
   font-family:'Inter',sans-serif;
   display:flex;flex-direction:column;align-items:center;
-  width:100%;min-height:100svh;transition:background .25s,color .25s;
+  width:100%;
+  /* Usa altezza dinamica del viewport — si adatta quando la tastiera nativa appare */
+  min-height:100dvh;
+  transition:background .25s,color .25s;
 }
 
 @keyframes confettiFall{0%{transform:translateY(-10px) rotate(0);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
@@ -181,7 +200,7 @@ const STYLES = `
 @keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 @keyframes streakPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 
-/* Header */
+/* Header — griglia 3 colonne per centrare il titolo */
 .header{
   width:100%;max-width:480px;
   display:grid;grid-template-columns:1fr auto 1fr;
@@ -190,12 +209,19 @@ const STYLES = `
 }
 .header-left{display:flex;justify-content:flex-start;align-items:center;gap:2px}
 .header-right{display:flex;justify-content:flex-end;align-items:center;gap:2px}
-.header-center{display:flex;flex-direction:column;align-items:center;gap:1px}
+.header-center{
+  display:flex;flex-direction:column;
+  /* Lieve offset a sinistra per bilanciare visivamente i tasti a destra */
+  align-items:flex-start;
+  padding-left:6px;
+  gap:1px;
+}
 .header-title{
   font-family:'Bebas Neue',sans-serif;font-size:22px;
   letter-spacing:3px;line-height:1;white-space:nowrap;color:var(--text);
 }
 .header-date{font-size:10px;color:var(--muted);letter-spacing:.3px}
+
 .icon-btn{
   background:none;border:none;cursor:pointer;color:var(--muted);
   font-size:16px;line-height:1;
@@ -203,6 +229,7 @@ const STYLES = `
   width:28px;height:28px;border-radius:6px;transition:color .2s,background .2s;
 }
 .icon-btn:hover{color:var(--text);background:rgba(128,128,128,.12)}
+
 .streak-badge{
   display:flex;align-items:center;gap:2px;font-size:12px;font-weight:700;color:#f5a000;
   padding:2px 6px;border-radius:10px;
@@ -223,11 +250,14 @@ const STYLES = `
   animation:fadeIn .2s ease both;white-space:nowrap;
 }
 
-/* Game area */
+/* Game area — usa flex con overflow hidden per non sforare */
 .game-area{
   flex:1;width:100%;max-width:480px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:10px;padding:10px 8px 14px;
+  gap:8px;
+  /* Padding bottom generoso per lasciare spazio alla tastiera visuale */
+  padding:8px 8px 12px;
+  overflow:hidden;
 }
 
 /* Board */
@@ -235,49 +265,81 @@ const STYLES = `
 .board.shake{animation:shake .4s ease}
 .board-row{display:flex;gap:5px}
 
-/* Celle */
+/* Celle — dimensione adattiva con clamp */
 .cell{
-  width:56px;height:56px;
+  width:clamp(44px,11vw,56px);
+  height:clamp(44px,11vw,56px);
   display:flex;align-items:center;justify-content:center;
-  font-family:'Bebas Neue',sans-serif;font-size:28px;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(22px,5.5vw,28px);
   border:2px solid var(--border);background:var(--bg);color:var(--text);
-  user-select:none;transition:border-color .1s;
+  user-select:none;transition:border-color .1s;cursor:pointer;
 }
 .cell.filled{border-color:#787c7e;animation:pop .1s ease}
 .cell.revealed{border-color:var(--status);background:var(--status);color:#fff;animation:revealCell .22s ease both}
 .cell.bounce{animation:bounceWin .5s ease var(--delay) both}
+/* Riga corrente: bordo leggermente illuminato */
+.cell.current-row{border-color:#565758}
+.cell.current-row.filled{border-color:#999}
+
+/* Input nascosto per tastiera nativa */
+.hidden-input{
+  position:absolute;opacity:0;width:1px;height:1px;
+  top:50%;left:50%;pointer-events:none;
+  font-size:16px; /* Evita zoom automatico su iOS */
+  border:none;outline:none;background:transparent;
+  /* autocomplete e autocorrect disabilitati */
+}
 
 /* Contatore */
-.attempt-counter{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.5px;text-align:center;min-height:16px}
-
-/* Tastiera */
-.keyboard{width:100%;max-width:480px;display:flex;flex-direction:column;gap:6px}
-.kb-row{display:flex;justify-content:center;gap:5px}
-.kb-key{
-  height:52px;min-width:36px;max-width:36px;flex:1;
-  border-radius:4px;border:none;background:#818384;color:#fff;
-  font-family:'Inter',sans-serif;font-size:12px;font-weight:700;
-  cursor:pointer;transition:background .25s,transform .1s;user-select:none;
+.attempt-counter{
+  font-size:11px;color:var(--muted);font-weight:600;
+  letter-spacing:.5px;text-align:center;min-height:15px;
 }
-.kb-key.wide{min-width:58px;max-width:58px;font-size:11px}
-.kb-key:active{transform:scale(.95)}
+
+/* Tastiera visuale — tasti ridimensionati con clamp */
+.keyboard{width:100%;max-width:480px;display:flex;flex-direction:column;gap:5px;flex-shrink:0}
+.kb-row{display:flex;justify-content:center;gap:4px}
+.kb-key{
+  height:clamp(42px,10.5vw,52px);
+  min-width:clamp(28px,7vw,36px);
+  max-width:clamp(28px,7vw,36px);
+  flex:1;border-radius:4px;border:none;
+  background:#818384;color:#fff;
+  font-family:'Inter',sans-serif;
+  font-size:clamp(10px,2.8vw,12px);
+  font-weight:700;cursor:pointer;
+  transition:background .25s,transform .1s;user-select:none;
+  /* Niente touch-action per risposta immediata */
+  touch-action:manipulation;
+}
+.kb-key.wide{
+  min-width:clamp(46px,11.5vw,58px);
+  max-width:clamp(46px,11.5vw,58px);
+  font-size:clamp(9px,2.5vw,11px);
+}
+.kb-key:active{transform:scale(.94)}
 .kb-key.kb-correct{background:var(--correct)}
 .kb-key.kb-present{background:var(--present)}
 .kb-key.kb-absent{background:#3a3a3c}
 
-/* Modal — struttura stabile, niente rimontaggi */
+/* Modal */
 .overlay{
   position:fixed;inset:0;background:rgba(0,0,0,.82);
   display:flex;align-items:center;justify-content:center;
   z-index:200;padding:16px;
-  /* NO animation qui — evita il flickering al re-render */
 }
 .modal{
   background:var(--surface);border:1px solid var(--border);border-radius:14px;
-  width:100%;max-width:340px;padding:22px 16px;
-  display:flex;flex-direction:column;align-items:center;gap:14px;
+  width:100%;max-width:340px;padding:20px 16px;
+  display:flex;flex-direction:column;align-items:center;gap:13px;
   animation:slideUp .25s ease both;
-  max-height:90svh;overflow-y:auto;
+  max-height:90dvh;overflow-y:auto;
+}
+/* Handle per swipe su mobile */
+.modal-handle{
+  width:36px;height:4px;border-radius:2px;
+  background:var(--border);margin-bottom:-4px;flex-shrink:0;
 }
 .modal h2{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;color:var(--text)}
 .modal p{font-size:13px;color:var(--muted);text-align:center;line-height:1.5}
@@ -286,8 +348,6 @@ const STYLES = `
   color:var(--correct);background:rgba(106,170,100,.12);
   padding:6px 20px;border-radius:8px;border:1px solid rgba(106,170,100,.3);
 }
-
-/* Countdown */
 .countdown-wrap{
   display:flex;flex-direction:column;align-items:center;gap:3px;width:100%;
   padding:10px;border-radius:10px;border:1px solid var(--border);
@@ -295,8 +355,6 @@ const STYLES = `
 }
 .countdown-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
 .countdown-time{font-family:'Bebas Neue',sans-serif;font-size:34px;letter-spacing:4px;color:var(--text);line-height:1}
-
-/* Stats */
 .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;width:100%}
 .stat-box{display:flex;flex-direction:column;align-items:center;gap:2px}
 .stat-num{font-family:'Bebas Neue',sans-serif;font-size:30px;line-height:1;color:var(--text)}
@@ -308,24 +366,19 @@ const STYLES = `
   height:20px;min-width:24px;background:var(--absent);border-radius:3px;
   display:flex;align-items:center;justify-content:flex-end;padding-right:6px;
   font-size:11px;font-weight:700;color:#fff;
-  /* NO transition qui — causa flickering nel light mode */
 }
 .dist-bar.hi{background:var(--correct)}
-
-/* Bottoni */
 .btn{
   padding:11px 16px;border-radius:8px;border:none;
   font-family:'Inter',sans-serif;font-weight:700;font-size:13px;
   cursor:pointer;transition:filter .15s,transform .1s;
-  white-space:nowrap;color:#fff!important;
+  white-space:nowrap;color:#fff!important;touch-action:manipulation;
 }
 .btn:hover{filter:brightness(1.12)}
 .btn:active{transform:scale(.97)}
 .btn-primary{background:var(--correct)}
 .btn-secondary{background:#4a4a4c}
 .btn-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:100%}
-
-/* Share */
 .share-box{
   background:#0e0e0f;border-radius:10px;padding:12px 14px;
   border:1px solid var(--border);width:100%;
@@ -334,8 +387,6 @@ const STYLES = `
 .share-header{font-size:12px;color:var(--muted);text-align:center}
 .share-grid{font-size:19px;line-height:1.5;display:flex;flex-direction:column;align-items:center}
 .share-score{font-family:'Bebas Neue',sans-serif;font-size:16px;color:var(--correct);letter-spacing:1px;margin-top:3px}
-
-/* Tutorial */
 .tutorial-examples{display:flex;flex-direction:column;gap:10px;width:100%}
 .tutorial-row{display:flex;gap:4px;justify-content:center}
 .tutorial-cell{
@@ -346,13 +397,11 @@ const STYLES = `
 .tutorial-cell.correct{background:var(--correct);border-color:var(--correct);color:#fff}
 .tutorial-cell.present{background:var(--present);border-color:var(--present);color:#fff}
 .tutorial-cell.absent{background:var(--absent);border-color:var(--absent);color:#fff}
-
-/* Archivio */
-.archive-wrap{display:flex;flex-wrap:wrap;gap:6px;max-height:160px;overflow-y:auto;padding:2px;width:100%}
+.archive-wrap{display:flex;flex-wrap:wrap;gap:6px;max-height:155px;overflow-y:auto;padding:2px;width:100%}
 .chip{
   padding:5px 10px;border-radius:20px;font-size:11px;font-weight:600;
   cursor:pointer;border:1px solid transparent;background:var(--border);color:var(--text);
-  display:flex;align-items:center;gap:4px;transition:filter .15s;
+  display:flex;align-items:center;gap:4px;touch-action:manipulation;
 }
 .chip:hover{filter:brightness(1.2)}
 .chip.today{background:var(--correct);color:#fff}
@@ -361,13 +410,6 @@ const STYLES = `
 .chip-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
 .archive-legend{font-size:11px;color:var(--muted);display:flex;gap:12px;justify-content:center}
 .archive-legend span{display:flex;align-items:center;gap:4px}
-
-@media(max-width:380px){
-  .cell{width:50px;height:50px;font-size:24px}
-  .kb-key{min-width:30px;max-width:30px;height:46px;font-size:10px}
-  .kb-key.wide{min-width:50px;max-width:50px}
-  .header-title{font-size:18px;letter-spacing:2px}
-}
 `;
 
 // ─── COSTANTI ────────────────────────────────────────────────────────────────
@@ -386,7 +428,7 @@ function statusColor(s) {
   return "transparent";
 }
 
-// ─── KEYBOARD (memo — non re-renderizza se i props non cambiano) ──────────────
+// ─── KEYBOARD ────────────────────────────────────────────────────────────────
 const Keyboard = memo(function Keyboard({onKey, letterStates}) {
   return (
     <div className="keyboard">
@@ -397,7 +439,8 @@ const Keyboard = memo(function Keyboard({onKey, letterStates}) {
             return (
               <button key={k}
                 className={`kb-key${k.length>1?" wide":""}${st?` kb-${st}`:""}`}
-                onClick={() => onKey(k)}>{k}
+                onPointerDown={e => { e.preventDefault(); onKey(k); }}>
+                {k}
               </button>
             );
           })}
@@ -407,11 +450,13 @@ const Keyboard = memo(function Keyboard({onKey, letterStates}) {
   );
 });
 
-// ─── MODAL COMPONENTS (fuori da App — stabili, non rimontaggi ad ogni render) ─
+// ─── MODALI ──────────────────────────────────────────────────────────────────
 const ModalTutorial = memo(function ModalTutorial({onClose}) {
+  const ref = useSwipeDown(onClose);
   return (
     <div className="overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
+      <div className="modal" ref={ref} onClick={e => e.stopPropagation()}>
+        <div className="modal-handle"/>
         <h2>Come si gioca</h2>
         <p>Indovina la parola in 6 tentativi.<br/>Ogni tentativo deve essere di 5 lettere.</p>
         <div className="tutorial-examples">
@@ -434,7 +479,7 @@ const ModalTutorial = memo(function ModalTutorial({onClose}) {
             ))}
           </div>
         </div>
-        <p>Una nuova parola ogni giorno!<br/>I tentativi vengono salvati automaticamente.</p>
+        <p>Una nuova parola ogni giorno!<br/>Puoi digitare dalla tastiera del telefono toccando la griglia.</p>
         <button className="btn btn-primary" onClick={onClose}>Inizia!</button>
       </div>
     </div>
@@ -442,10 +487,12 @@ const ModalTutorial = memo(function ModalTutorial({onClose}) {
 });
 
 const ModalStats = memo(function ModalStats({stats, guesses, won, onClose}) {
+  const ref = useSwipeDown(onClose);
   const maxBar = Math.max(...Object.values(stats.dist), 1);
   return (
     <div className="overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
+      <div className="modal" ref={ref} onClick={e => e.stopPropagation()}>
+        <div className="modal-handle"/>
         <h2>Statistiche</h2>
         <div className="stats-grid">
           <div className="stat-box"><span className="stat-num">{stats.played}</span><span className="stat-label">Partite</span></div>
@@ -472,10 +519,23 @@ const ModalStats = memo(function ModalStats({stats, guesses, won, onClose}) {
 
 const ModalEnd = memo(function ModalEnd({won, target, guesses, dateLabel, archiveDate, share, onClose, onStats, onRandom, onArchive}) {
   const [copied, setCopied] = useState(false);
+  const ref = useSwipeDown(onClose);
   const showCountdown = !archiveDate || isToday(archiveDate);
+
+  function doShare() {
+    if (navigator.share) {
+      navigator.share({ text: share.plainText }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(share.plainText).then(() => {
+        setCopied(true); setTimeout(() => setCopied(false), 2000);
+      });
+    }
+  }
+
   return (
     <div className="overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
+      <div className="modal" ref={ref} onClick={e => e.stopPropagation()}>
+        <div className="modal-handle"/>
         <h2>{won ? "Hai vinto!" : "Peccato"}</h2>
         {!won && <><p>La parola era:</p><div className="modal-word">{target}</div></>}
         <div className="share-box">
@@ -490,10 +550,9 @@ const ModalEnd = memo(function ModalEnd({won, target, guesses, dateLabel, archiv
           </div>
         )}
         <div className="btn-row">
-          <button className="btn btn-primary" onClick={() => {
-            navigator.clipboard.writeText(share.plainText).then(() => setCopied(true));
-            setTimeout(() => setCopied(false), 2000);
-          }}>{copied ? "✓ Copiato!" : "Condividi"}</button>
+          <button className="btn btn-primary" onClick={doShare}>
+            {navigator.share ? "Condividi" : (copied ? "✓ Copiato!" : "Copia")}
+          </button>
           <button className="btn btn-secondary" onClick={onStats}>Statistiche</button>
         </div>
         <div className="btn-row">
@@ -506,6 +565,7 @@ const ModalEnd = memo(function ModalEnd({won, target, guesses, dateLabel, archiv
 });
 
 const ModalArchive = memo(function ModalArchive({onSelect, onClose, getStatus}) {
+  const ref = useSwipeDown(onClose);
   const today = new Date();
   const chips = Array.from({length:30}, (_,i) => {
     const d = new Date(today); d.setDate(today.getDate()-i);
@@ -514,7 +574,8 @@ const ModalArchive = memo(function ModalArchive({onSelect, onClose, getStatus}) 
   });
   return (
     <div className="overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
+      <div className="modal" ref={ref} onClick={e => e.stopPropagation()}>
+        <div className="modal-handle"/>
         <h2>Archivio</h2>
         <p>Gioca le sfide degli ultimi 30 giorni</p>
         <div className="archive-wrap">
@@ -525,7 +586,7 @@ const ModalArchive = memo(function ModalArchive({onSelect, onClose, getStatus}) 
             else if (status==="l") cls += " done-l";
             return (
               <button key={i} className={cls} onClick={() => onSelect(it ? null : d)}>
-                {status && <span className="chip-dot"></span>}
+                {status && <span className="chip-dot"/>}
                 {label}
               </button>
             );
@@ -560,10 +621,17 @@ export default function App() {
   const [hardMode,setHardMode]           = useState(false);
   const [stats,setStats]                 = useState({played:0,wins:0,streak:0,maxStreak:0,dist:{1:0,2:0,3:0,4:0,5:0,6:0}});
   const [streakPulse,setStreakPulse]     = useState(false);
-  const guessesRef = useRef(guesses);
-  useEffect(() => { guessesRef.current = guesses; }, [guesses]);
 
-  // postMessage altezza iframe per WordPress
+  const guessesRef  = useRef(guesses);
+  const inputRef    = useRef(null);  // input nascosto per tastiera nativa
+  const gameOverRef = useRef(gameOver);
+  const revealRef   = useRef(revealingRow);
+
+  useEffect(() => { guessesRef.current  = guesses;      }, [guesses]);
+  useEffect(() => { gameOverRef.current = gameOver;     }, [gameOver]);
+  useEffect(() => { revealRef.current   = revealingRow; }, [revealingRow]);
+
+  // postMessage altezza iframe WordPress
   useEffect(() => {
     function send() { window.parent?.postMessage({type:"wordle-height",height:document.body.scrollHeight},"*"); }
     send();
@@ -589,7 +657,7 @@ export default function App() {
 
   // Salva draft
   useEffect(() => {
-    if (!target || gameOver) return;
+    if (!target||gameOver) return;
     localStorage.setItem(LS+"draft_"+seedFromDate(archiveDate||new Date()), current);
   }, [current, target, gameOver, archiveDate]);
 
@@ -649,9 +717,9 @@ export default function App() {
     }, 280);
   }
 
-  // Submit
+  // Submit (useCallback con ref per evitare closure stale)
   const submitGuess = useCallback(() => {
-    if (gameOver || revealingRow) return;
+    if (gameOverRef.current || revealRef.current) return;
     const norm = current.toUpperCase().replace(/[^A-Z]/g,"");
     if (norm.length !== 5) {
       toast("La parola deve avere 5 lettere");
@@ -674,6 +742,8 @@ export default function App() {
     const newGuess = {word:norm, result};
     const attemptNum = guessesRef.current.length+1;
     setCurrent("");
+    // Resetta e ri-focalizza l'input nascosto
+    if (inputRef.current) { inputRef.current.value = ""; }
     localStorage.removeItem(LS+"draft_"+seedFromDate(archiveDate||new Date()));
     revealSequentially(newGuess, () => {
       setGuesses(prev => {
@@ -698,7 +768,7 @@ export default function App() {
         return next;
       });
     });
-  }, [gameOver, revealingRow, current, target, hardMode, archiveDate, toast]);
+  }, [current, target, hardMode, archiveDate, toast]);
 
   function updateStats(win, guessCount) {
     setStats(prev => {
@@ -713,18 +783,49 @@ export default function App() {
     });
   }
 
+  // Gestione tasto fisico
   const handleKey = useCallback((k) => {
-    if (gameOver||revealingRow) return;
+    if (gameOverRef.current || revealRef.current) return;
     if (k==="⌫"||k==="Backspace") setCurrent(c=>c.slice(0,-1));
     else if (k==="INVIO"||k==="Enter") submitGuess();
-    else if (/^[A-Za-z]$/.test(k)&&current.length<5) setCurrent(c=>c+k.toUpperCase());
-  }, [gameOver, revealingRow, current, submitGuess]);
+    else if (/^[A-Za-zàáèéìíòóùú]$/i.test(k) && current.length<5) {
+      const upper = k.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Z]/g,"");
+      if (upper) setCurrent(c=>c+upper);
+    }
+  }, [current, submitGuess]);
 
+  // Tastiera fisica del computer
   useEffect(() => {
-    const fn = (e) => handleKey(e.key==="Backspace"?"⌫":e.key==="Enter"?"INVIO":e.key);
+    const fn = (e) => {
+      if (e.ctrlKey||e.metaKey||e.altKey) return;
+      handleKey(e.key==="Backspace"?"⌫":e.key==="Enter"?"INVIO":e.key);
+    };
     window.addEventListener("keydown",fn);
     return () => window.removeEventListener("keydown",fn);
   }, [handleKey]);
+
+  // Input nascosto per tastiera nativa mobile
+  // Intercetta ogni carattere digitato e lo invia a handleKey
+  const handleNativeInput = useCallback((e) => {
+    const val = e.target.value;
+    if (!val) return;
+    // Ogni carattere inserito viene processato
+    for (const ch of val) {
+      if (/^[A-Za-zàáèéìíòóùú]$/.test(ch)) handleKey(ch);
+    }
+    e.target.value = "";
+  }, [handleKey]);
+
+  const handleNativeKeyDown = useCallback((e) => {
+    if (e.key === "Backspace") { e.preventDefault(); handleKey("⌫"); }
+    if (e.key === "Enter")     { e.preventDefault(); handleKey("INVIO"); }
+  }, [handleKey]);
+
+  // Focus sull'input nascosto quando si tocca la griglia
+  const focusInput = useCallback(() => {
+    if (gameOver || modal) return;
+    inputRef.current?.focus();
+  }, [gameOver, modal]);
 
   const buildShare = useCallback(() => {
     const header = `Wordle Italiano — ${dateLabel}`;
@@ -751,6 +852,8 @@ export default function App() {
   function renderRows() {
     const rows = [];
     const winRow = won ? guesses.length-1 : -1;
+    const currentRowIdx = gameOver ? -1 : guesses.length;
+
     for (let r=0; r<MAX_GUESSES; r++) {
       if (r < guesses.length) {
         const g = guesses[r];
@@ -775,12 +878,12 @@ export default function App() {
             })}
           </div>
         );
-      } else if (!gameOver && !revealingRow && r===guesses.length) {
+      } else if (r === currentRowIdx) {
         const letters = current.padEnd(5," ").split("");
         rows.push(
           <div className="board-row" key={r}>
             {letters.map((l,i) => (
-              <div key={i} className={`cell${l!==" "?" filled":""}`}>{l===" "?"":l}</div>
+              <div key={i} className={`cell current-row${l!==" "?" filled":""}`}>{l===" "?"":l}</div>
             ))}
           </div>
         );
@@ -805,6 +908,22 @@ export default function App() {
     <>
       <style>{STYLES}</style>
       <div className={`wordle-root${lightMode?" light":""}`}>
+
+        {/* Input nascosto — cattura tastiera nativa mobile */}
+        <input
+          ref={inputRef}
+          className="hidden-input"
+          type="text"
+          inputMode="text"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="characters"
+          spellCheck="false"
+          onInput={handleNativeInput}
+          onKeyDown={handleNativeKeyDown}
+          readOnly={gameOver}
+          aria-hidden="true"
+        />
 
         <header className="header">
           <div className="header-left">
@@ -832,7 +951,7 @@ export default function App() {
             </button>
             <button className="icon-btn" title="Statistiche" style={{fontSize:"18px",fontWeight:"700"}}
               onClick={()=>setModal("stats")}>≡</button>
-            <button className="icon-btn" title="Archivio" style={{fontSize:"16px"}}
+            <button className="icon-btn" title="Archivio" style={{fontSize:"15px"}}
               onClick={()=>setModal("archive")}>◷</button>
           </div>
         </header>
@@ -842,7 +961,10 @@ export default function App() {
         </div>
 
         <div className="game-area">
-          <div className={`board${shaking?" shake":""}`}>{renderRows()}</div>
+          {/* Tap sulla griglia → focus input nascosto → tastiera nativa */}
+          <div className={`board${shaking?" shake":""}`} onClick={focusInput}>
+            {renderRows()}
+          </div>
           <div className="attempt-counter">{attemptText}</div>
           <Keyboard onKey={handleKey} letterStates={letterStates}/>
         </div>
@@ -862,7 +984,7 @@ export default function App() {
           onArchive={()=>setModal("archive")}
         />
       )}
-      {modal==="archive"  && (
+      {modal==="archive" && (
         <ModalArchive
           onSelect={(d)=>{setArchiveDate(d);setModal(null);}}
           onClose={()=>setModal(null)}
