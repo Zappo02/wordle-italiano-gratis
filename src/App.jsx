@@ -307,22 +307,24 @@ const STYLES = `
 .kb-key{
   flex:1;
   height:clamp(46px,12vw,56px);
-  min-width:0; /* lascia che flex decida */
+  min-width:0;
+  overflow:hidden; /* impedisce hitbox che sforano */
   border-radius:5px;border:none;
   background:#818384;color:#fff;
   font-family:'Inter',sans-serif;
   font-size:clamp(12px,3.2vw,15px);
   font-weight:700;cursor:pointer;
-  transition:background .25s,transform .1s;
+  /* Niente transform su active — causa il "tasto bloccato" su mobile */
+  transition:background .25s,opacity .1s;
   user-select:none;touch-action:manipulation;
-  /* Nessun padding laterale — massimizza la superficie toccabile */
   padding:0;
+  -webkit-tap-highlight-color:transparent; /* rimuove flash blu iOS/Android */
 }
+.kb-key:active{opacity:.7} /* feedback visivo senza transform */
 .kb-key.wide{
-  flex:1.6; /* INVIO e ⌫ più larghi proporzionalmente */
+  flex:1.6;
   font-size:clamp(9px,2.4vw,11px);
 }
-.kb-key:active{transform:scale(.94)}
 .kb-key.kb-correct{background:var(--correct)}
 .kb-key.kb-present{background:var(--present)}
 .kb-key.kb-absent{background:#3a3a3c}
@@ -830,8 +832,27 @@ export default function App() {
   }, [guesses, won, dateLabel]);
 
   const playRandom = useCallback(() => {
-    const offset = 1+Math.floor(Math.random()*29);
-    const d = new Date(); d.setDate(d.getDate()-offset);
+    const today = new Date();
+    // Raccoglie i giorni degli ultimi 30 (escluso oggi) non ancora giocati
+    const unplayed = [];
+    for (let i = 1; i <= 30; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const seed = seedFromDate(d);
+      try {
+        const saved = JSON.parse(localStorage.getItem(LS+"game_"+seed)||"null");
+        if (!saved?.guesses?.length) unplayed.push(d);
+      } catch { unplayed.push(d); }
+    }
+    const pool = unplayed.length > 0 ? unplayed : (() => {
+      // Tutti già giocati → pesca uno a caso tra i 30
+      const all = [];
+      for (let i = 1; i <= 30; i++) {
+        const d = new Date(today); d.setDate(today.getDate()-i); all.push(d);
+      }
+      return all;
+    })();
+    const d = pool[Math.floor(Math.random()*pool.length)];
     setArchiveDate(d); setModal(null);
   }, []);
 
