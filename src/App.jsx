@@ -278,9 +278,11 @@ const STYLES = `
 .cell.filled{border-color:#787c7e;animation:pop .1s ease}
 .cell.revealed{border-color:var(--status);background:var(--status);color:#fff;animation:revealCell .22s ease both}
 .cell.bounce{animation:bounceWin .5s ease var(--delay) both}
-/* Riga corrente: bordo leggermente illuminato */
-.cell.current-row{border-color:#565758}
-.cell.current-row.filled{border-color:#999}
+/* Riga corrente: bordo luminoso in dark mode */
+.cell.current-row{border-color:#909090}
+.cell.current-row.filled{border-color:#c8c8c8}
+.light .cell.current-row{border-color:#888}
+.light .cell.current-row.filled{border-color:#444}
 
 /* Input nascosto per tastiera nativa */
 .hidden-input{
@@ -439,7 +441,8 @@ const Keyboard = memo(function Keyboard({onKey, letterStates}) {
             return (
               <button key={k}
                 className={`kb-key${k.length>1?" wide":""}${st?` kb-${st}`:""}`}
-                onPointerDown={e => { e.preventDefault(); onKey(k); }}>
+                onTouchEnd={e => { e.preventDefault(); onKey(k); }}
+                onClick={e => { e.preventDefault(); onKey(k); }}>
                 {k}
               </button>
             );
