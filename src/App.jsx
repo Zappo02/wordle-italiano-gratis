@@ -445,7 +445,22 @@ const Keyboard = memo(function Keyboard({onKey, letterStates}) {
             return (
               <button key={k}
                 className={`kb-key${k.length>1?" wide":""}${st?` kb-${st}`:""}`}
-                onClick={() => onKey(k)}>
+                onPointerDown={e => {
+                  // Rilascia immediatamente il pointer capture:
+                  // così il browser non "blocca" il tasto anche se
+                  // il dito si sposta di qualche pixel prima del rilascio
+                  e.currentTarget.releasePointerCapture(e.pointerId);
+                }}
+                onPointerUp={e => {
+                  // Verifica che il rilascio avvenga sopra questo tasto
+                  const r = e.currentTarget.getBoundingClientRect();
+                  if (
+                    e.clientX >= r.left && e.clientX <= r.right &&
+                    e.clientY >= r.top  && e.clientY <= r.bottom
+                  ) {
+                    onKey(k);
+                  }
+                }}>
                 {k}
               </button>
             );
