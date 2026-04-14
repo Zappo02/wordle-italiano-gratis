@@ -167,10 +167,12 @@ const STYLES = `
   --bg:#121213;--surface:#1a1a1b;--border:#3a3a3c;
   --text:#fff;--muted:#818384;
   --correct:#6aaa64;--present:#c9b458;--absent:#787c7e;
+  --share-bg:#0e0e0f;
 }
 .light{
   --bg:#f9f9f9;--surface:#fff;--border:#d3d6da;
   --text:#1a1a1b;--muted:#6e7275;--absent:#878a8c;
+  --share-bg:#e8e8e8;
 }
 .light .kb-key{background:#d3d6da;color:#1a1a1b}
 .light .kb-key.kb-correct{background:var(--correct);color:#fff}
@@ -295,8 +297,8 @@ const STYLES = `
 }
 
 /* Tastiera visuale — tasti più grandi */
-.keyboard{width:100%;max-width:480px;display:flex;flex-direction:column;gap:7px;flex-shrink:0}
-.kb-row{display:flex;justify-content:center;gap:5px}
+.keyboard{width:100%;max-width:480px;display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+.kb-row{display:flex;justify-content:center;gap:7px}
 .kb-key{
   height:clamp(46px,12vw,58px);
   min-width:clamp(30px,8vw,40px);
@@ -376,7 +378,7 @@ const STYLES = `
 .btn-secondary{background:#4a4a4c}
 .btn-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:100%}
 .share-box{
-  background:#0e0e0f;border-radius:10px;padding:12px 14px;
+  background:var(--share-bg);border-radius:10px;padding:12px 14px;
   border:1px solid var(--border);width:100%;
   display:flex;flex-direction:column;align-items:center;gap:4px;
 }
@@ -964,29 +966,31 @@ export default function App() {
           <Keyboard onKey={handleKey} letterStates={letterStates}/>
         </div>
 
-      </div>
+        {/* Modal dentro wordle-root — ereditano le CSS variables del tema */}
+        {modal==="tutorial" && <ModalTutorial onClose={()=>setModal(null)}/>}
+        {modal==="stats"    && <ModalStats stats={stats} guesses={guesses} won={won} onClose={()=>setModal(null)}/>}
+        {modal==="end"      && (
+          <ModalEnd
+            won={won} target={target} guesses={guesses}
+            dateLabel={dateLabel} archiveDate={archiveDate}
+            share={share}
+            onClose={()=>setModal(null)}
+            onStats={()=>setModal("stats")}
+            onRandom={playRandom}
+            onArchive={()=>setModal("archive")}
+          />
+        )}
+        {modal==="archive" && (
+          <ModalArchive
+            onSelect={(d)=>{setArchiveDate(d);setModal(null);}}
+            onClose={()=>setModal(null)}
+            getStatus={getArchiveStatus}
+          />
+        )}
 
-      {modal==="tutorial" && <ModalTutorial onClose={()=>setModal(null)}/>}
-      {modal==="stats"    && <ModalStats stats={stats} guesses={guesses} won={won} onClose={()=>setModal(null)}/>}
-      {modal==="end"      && (
-        <ModalEnd
-          won={won} target={target} guesses={guesses}
-          dateLabel={dateLabel} archiveDate={archiveDate}
-          share={share}
-          onClose={()=>setModal(null)}
-          onStats={()=>setModal("stats")}
-          onRandom={playRandom}
-          onArchive={()=>setModal("archive")}
-        />
-      )}
-      {modal==="archive" && (
-        <ModalArchive
-          onSelect={(d)=>{setArchiveDate(d);setModal(null);}}
-          onClose={()=>setModal(null)}
-          getStatus={getArchiveStatus}
-        />
-      )}
+      </div>
     </>
   );
 }
+
 
