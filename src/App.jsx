@@ -431,7 +431,14 @@ function statusColor(s) {
 }
 
 // ─── KEYBOARD ────────────────────────────────────────────────────────────────
-const Keyboard = memo(function Keyboard({onKey, letterStates}) {
+const Keyboard = memo(function Keyboard({onKey, letterStates, inputRef}) {
+  const handlePress = useCallback((k) => {
+    // Sfoca l'input nascosto prima di processare il tasto,
+    // così non riceve anche lui il carattere dalla tastiera nativa
+    inputRef?.current?.blur();
+    onKey(k);
+  }, [onKey, inputRef]);
+
   return (
     <div className="keyboard">
       {KB_ROWS.map((row,ri) => (
@@ -441,8 +448,7 @@ const Keyboard = memo(function Keyboard({onKey, letterStates}) {
             return (
               <button key={k}
                 className={`kb-key${k.length>1?" wide":""}${st?` kb-${st}`:""}`}
-                onTouchEnd={e => { e.preventDefault(); onKey(k); }}
-                onClick={e => { e.preventDefault(); onKey(k); }}>
+                onClick={() => handlePress(k)}>
                 {k}
               </button>
             );
@@ -969,7 +975,7 @@ export default function App() {
             {renderRows()}
           </div>
           <div className="attempt-counter">{attemptText}</div>
-          <Keyboard onKey={handleKey} letterStates={letterStates}/>
+          <Keyboard onKey={handleKey} letterStates={letterStates} inputRef={inputRef}/>
         </div>
 
       </div>
