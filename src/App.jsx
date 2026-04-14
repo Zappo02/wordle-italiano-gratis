@@ -178,8 +178,11 @@ const STYLES = `
 .light .kb-key.kb-absent{background:#787c7e;color:#fff}
 .light .cell{background:var(--bg);color:var(--text)}
 .light .btn-secondary{background:#c5c7c9!important;color:#1a1a1b!important}
-.light .share-box{background:#efefef}
+.light .share-box{background:#e8e8e8;border-color:#c8c8c8}
+.light .share-header{color:#555}
+.light .share-score{color:var(--correct)}
 .light .toast{background:#1a1a1b;color:#fff}
+.light .countdown-wrap{background:rgba(0,0,0,.03)}
 
 .wordle-root{
   background:var(--bg);color:var(--text);
@@ -291,25 +294,24 @@ const STYLES = `
   letter-spacing:.5px;text-align:center;min-height:15px;
 }
 
-/* Tastiera visuale — tasti ridimensionati con clamp */
-.keyboard{width:100%;max-width:480px;display:flex;flex-direction:column;gap:5px;flex-shrink:0}
-.kb-row{display:flex;justify-content:center;gap:4px}
+/* Tastiera visuale — tasti più grandi */
+.keyboard{width:100%;max-width:480px;display:flex;flex-direction:column;gap:7px;flex-shrink:0}
+.kb-row{display:flex;justify-content:center;gap:5px}
 .kb-key{
-  height:clamp(42px,10.5vw,52px);
-  min-width:clamp(28px,7vw,36px);
-  max-width:clamp(28px,7vw,36px);
-  flex:1;border-radius:4px;border:none;
+  height:clamp(46px,12vw,58px);
+  min-width:clamp(30px,8vw,40px);
+  max-width:clamp(30px,8vw,40px);
+  flex:1;border-radius:5px;border:none;
   background:#818384;color:#fff;
   font-family:'Inter',sans-serif;
-  font-size:clamp(10px,2.8vw,12px);
+  font-size:clamp(11px,3vw,14px);
   font-weight:700;cursor:pointer;
   transition:background .25s,transform .1s;user-select:none;
-  /* Niente touch-action per risposta immediata */
   touch-action:manipulation;
 }
 .kb-key.wide{
-  min-width:clamp(46px,11.5vw,58px);
-  max-width:clamp(46px,11.5vw,58px);
+  min-width:clamp(50px,13vw,66px);
+  max-width:clamp(50px,13vw,66px);
   font-size:clamp(9px,2.5vw,11px);
 }
 .kb-key:active{transform:scale(.94)}
@@ -619,6 +621,7 @@ export default function App() {
   const guessesRef  = useRef(guesses);
   const gameOverRef = useRef(gameOver);
   const revealRef   = useRef(revealingRow);
+  const inputRef    = useRef(null);
 
   useEffect(() => { guessesRef.current  = guesses;      }, [guesses]);
   useEffect(() => { gameOverRef.current = gameOver;     }, [gameOver]);
@@ -795,6 +798,22 @@ export default function App() {
     return () => window.removeEventListener("keydown",fn);
   }, [handleKey]);
 
+  // Tastiera nativa mobile: input trasparente, intercetta SOLO keydown
+  // NON usa onInput/onChange così non duplica mai i caratteri
+  const handleNativeKeyDown = useCallback((e) => {
+    // Su mobile keydown arriva per ogni tasto — gestiamo tutto qui
+    if (e.key === "Backspace") { e.preventDefault(); handleKey("⌫"); return; }
+    if (e.key === "Enter")     { e.preventDefault(); handleKey("INVIO"); return; }
+    // Lettere: normalize e passa a handleKey
+    const k = e.key;
+    if (k && k.length === 1) {
+      e.preventDefault();
+      handleKey(k);
+    }
+    // Resetta il valore dell'input così non accumula testo
+    e.target.value = "";
+  }, [handleKey]);
+
   const buildShare = useCallback(() => {
     const header = `Wordle Italiano — ${dateLabel}`;
     const rows = guesses.map(g=>g.result.map(r=>r==="correct"?"🟩":r==="present"?"🟨":"⬛").join(""));
@@ -913,8 +932,30 @@ export default function App() {
         </div>
 
         <div className="game-area">
-          {/* Tap sulla griglia → focus input nascosto → tastiera nativa */}
-          <div className={`board${shaking?" shake":""}`}>
+          {/* Input trasparente per tastiera nativa mobile.
+              Usa solo onKeyDown — mai onInput/onChange per evitare doppi caratteri. */}
+          <input
+            ref={inputRef}
+            style={{
+              position:"absolute", opacity:0, width:1, height:1,
+              top:0, left:0, pointerEvents:"none",
+              fontSize:16, // evita zoom iOS
+            }}
+            type="text"
+            inputMode="text"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="characters"
+            spellCheck="false"
+            readOnly={gameOver || !!modal}
+            onKeyDown={handleNativeKeyDown}
+            aria-hidden="true"
+          />
+          {/* Tap sulla griglia → apre tastiera nativa */}
+          <div
+            className={`board${shaking?" shake":""}`}
+            onClick={() => { if (!gameOver && !modal) inputRef.current?.focus(); }}
+          >
             {renderRows()}
           </div>
           <div className="attempt-counter">{attemptText}</div>
